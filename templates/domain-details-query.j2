@@ -83,7 +83,7 @@
                                {% if technical.postal_code %} PostCode="{{ technical.postal_code }}" {% endif %}/>
         {% endif %}
         {% if technical.phone %}
-           <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
+          <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
         {% endif %}
         {% if technical.fax %}
           <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}" />

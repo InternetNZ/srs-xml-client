@@ -7,26 +7,49 @@ It is designed to allow generation and transmission of all the XML actions
 that the registry supports using command line arguments rather than having
 to manually write the XML yourself.
 
-Registrars can use that when integrating the SRS into their own systems
+Registrars may use that when integrating the SRS into their own systems
 as well as for executing any one-off transactions that their system does
 not support.
 
-InternetNZ devlopers can use the client when testing the SRS.
+InternetNZ devlopers use the client when testing the SRS.
 
 Using `--dry-run` it is also possible to generate XML than can then be
-sent using the `send-xml` action for any option not supported by the
+sent using the `send-xml` action for any feature not supported by the
 client itself.
 
-REQUIREMENTS
-------------
+REQUIRED MODULES
+----------------
 
-sxc uses the following non-standard python libraries: lxml, requests and
+`sxc` uses the following non-standard python modules: lxml, requests and
 jinja2.
 
 These are all available as Debian packages, to install them run:
 `sudo apt-get install python3-lxml python3-requests python3-jinja2`.
 
-If you do not have the SRS PGP key on your GPG key-ring, you can import
+
+SIGNING AND VERIFICATION
+------------------------
+
+`sxc` uses `gpg` to sign requests and verify the responses when
+communicating with the SRS.
+
+The secret PGP key for your registrar and the Registry's PGP key must be
+on the key-ring used by `gpg`. To view contents of the key-ring run:
+`gpg --list-keys --keyid-format long`.
+
+Output should be similar to the following example.
+
+```sh
+pub   4096R/ADC99F76A7806301 2017-05-01
+uid                          Example Registrar <registrar@example.co.nz>
+sub   4096R/407BA1A38134F125 2017-05-01
+
+pub   1024D/D8BF2BA3FA4077A6 2002-04-08
+uid                          SRS Application (Test srs-wgtn key) <srsapp@srs-wgtn.wgtn.cat-it.co.nz>
+sub   1024g/66CFBA71CC17E4DF 2002-04-08
+```
+
+If you do not have the Registry's PGP key on your key-ring, you can import
 that key from the `registry` sub-directory by running
 `gpg --import registry/srs-gpg-key.asc`.
 
@@ -43,11 +66,11 @@ The following environment variables can be used:
   secret keys on your keyring. Run
   `gpg --list-keys --keyid-format long` to see the list of key IDs.
 
-* `REGISTRY_URL` URL for the SRS registry, eg:
+* `REGISTRY_URL` URL for the SRS, eg:
   `https://srstest.srs.net.nz/srs/registrar` used when `--url` is not
   specified.
 
-* `GNUPGHOME` Used by gpg as the alternative to `~/.gnupg`, an alternate
+* `GNUPGHOME` Used by `gpg` as the alternative to `~/.gnupg`, an alternate
   directory can be set using `--gpg`.
 
 USAGE
@@ -70,8 +93,8 @@ You emulate the old sendXML script using `send-xml`.
 
 All requests require a registrar ID which is specified using `--registrar-id`.
 
-SRS registry URL is specified using `--url`, it is not required if
-`--dry-run` is being used.
+SRS URL is specified using `--url`, it is not required if `--dry-run` is
+being used.
 
 Both options can be set using enviroment variables, see ENVIROMENT above.
 
