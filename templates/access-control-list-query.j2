@@ -1,0 +1,18 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}">
+  <AccessControlListQry {% if resource %} Resource="{{ resource }}" {% endif %}
+                        {% if whitelist %} List="whitelist" {% elif blacklist %} List="blacklist" {% endif %}
+                        {% if types %}
+                          {% if types.registrar_id and types.domain_name %} Type="registrar_domain" {% elif types.registrar_id and types.ip_address %} Type="registrar_ip" {% elif types.registrar_id %} Type="registrar" {% elif types.domain_name %} Type="domain" {% elif types.ip_address %} Type="ip" {% endif %}
+                        {% endif %}
+                        {% if full_result is defined %} FullResult="{{ full_result | int }}" {% endif %}>
+    {% for access_control in access_controls if access_control.domain_name %}
+      <DomainNameFilter>{{ access_control.domain_name }}</DomainNameFilter>
+    {% endfor %}
+    {% for access_control in access_controls if access_control.registrar_id %}
+      <RegistrarIdFilter>{{ access_control.registrar_id }}</RegistrarIdFilter>
+    {% endfor %}
+    {% for access_control in access_controls if access_control.ip_address %}
+      <AddressFilter>{{ access_control.ip_address }}</AddressFilter>
+    {% endfor %}
+  </AccessControlListQry>
+</NZSRSRequest>

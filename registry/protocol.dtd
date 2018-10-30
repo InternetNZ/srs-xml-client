@@ -1,0 +1,1167 @@
+<?xml encoding="UTF-8"?>
+
+<!--
+protocol.rnc: RELAX NG schema for Shared Registry System Protocol
+
+Author:     Srdjan Jankovic
+Version:    Release version 7.11
+Revised:    SRS Development Team
+
+Based on a prototype written by Ewen McNeill, 2002/03/05
+-->
+
+<!--
+The NZ SRS registrar/registry protocol consists of an (externally)
+signed XML request document containing a series of actions to be
+performed on the register (updating it, or extracting information
+from it), which is answered by an (externally) signed XML response
+document containing answers to each of those actions, or an
+overall error message.
+
+Each action has its own element to specify that action, and there
+is also a response element which is used to enclose each response
+to an action.
+
+Each update-type action has an id number which is the registrar's
+identification for the action, which must be unique in all
+requests made to the register by that registrar.  The status of
+each action with an id number can be queried with the "getmsg"
+action.
+
+The registrar internally is the effective registrar of the
+transaction.  This must normally match the registrar UID specified
+externally.  However the registry may set this to a specific
+registrar other than its own "psuedo registrar" to perform actions
+"as if" it was that registrar, eg filter by that registrar.
+
+It is also included to assist debugging (by allowing network
+streams to be more directly linked to the registrar).
+
+======================================
+
+Copyright 2002-2009 NZ Registry Services
+
+This file is part of the Shared Registry System
+
+The Shared Registry System is free software; you can redistribute
+it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+
+The Shared Registry System is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with the Shared Registry System; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+02111-1307  USA
+
+-->
+
+<!-- == Common entities =================== -->
+
+<!-- Simple data types -->
+
+<!ENTITY % Number "CDATA">
+
+<!ENTITY % Dollars "CDATA">
+
+<!ENTITY % True "1">
+
+<!ENTITY % False "0">
+
+<!ENTITY % Boolean "%False;|%True;">
+
+<!-- Valid date -->
+
+<!ENTITY % Date "
+  Year %Number; #REQUIRED
+  Month %Number; #REQUIRED
+  Day %Number; #REQUIRED">
+
+<!--
+Valid time.
+If TimeZoneOffset omitted, NZ local time assumed. The mandatory
+format is (+/-)HH:MM (the sign is mandatory!), although (+/-)HHMM
+will be accepted with the ':' silently added.
+If Second is omitted, it defaults to 0
+-->
+
+<!ENTITY % Time "
+  Hour %Number; #REQUIRED
+  Minute %Number; #REQUIRED
+  Second %Number; #IMPLIED
+  TimeZoneOffset CDATA #IMPLIED">
+
+<!ENTITY % TimeStamp "
+  %Date;
+  %Time;">
+
+<!-- Valid domain name -->
+
+<!ENTITY % DomainName "CDATA">
+
+<!-- Valid DomainName details - for registering IDN -->
+
+<!ENTITY % DomainNameUnicode "CDATA">
+
+<!ENTITY % DomainNameUnicodeHex "CDATA">
+
+<!ENTITY % DomainNameLanguage "CDATA">
+
+<!-- Valid unique identifier ? -->
+
+<!ENTITY % UID "CDATA">
+
+<!-- Valid term -->
+
+<!ENTITY % Term "CDATA">
+
+<!ENTITY % RegistrarId "CDATA">
+
+<!ENTITY % RegistrarIdOrOTHERS "CDATA">
+
+<!-- Complex data types/definitions -->
+
+<!ENTITY % ActionResponse "Error|Domain*|UDAIValid|DomainTransfer
+                           |BillingTrans*|DeferredRegistrarIncome*
+                           |Registrar*|SysParam*|RunLog*|Schedule*
+                           |AccessControlList*|(RawRequest,RawResponse)
+                           |BillingAmount*|Handle*|Message*">
+
+<!ENTITY % RegDomainStatus "Active|PendingRelease">
+
+<!ENTITY % SLDomainStatus "CDATA">
+
+<!ENTITY % DomainStatus "CDATA">
+
+<!ENTITY % BillStatus "PendingConfirmation|Confirmed">
+
+<!ENTITY % Contact "PostalAddress?,Phone?,Fax?">
+
+<!ENTITY % ContactAttrFields "
+  Email CDATA #IMPLIED
+  Name CDATA #IMPLIED
+  Privacy (%Boolean;) #IMPLIED">
+
+<!ENTITY % ContactAttr "
+  HandleId CDATA #IMPLIED
+  ActionId CDATA #IMPLIED
+  %ContactAttrFields;">
+
+<!ENTITY % ContactFilter "PostalAddressFilter?,Phone?,Fax?">
+
+<!ENTITY % ContactAttrFilter "
+  HandleId CDATA #IMPLIED
+  Name CDATA #IMPLIED
+  Email CDATA #IMPLIED
+  Privacy (%Boolean;) #IMPLIED">
+
+<!ENTITY % PhoneAttr "
+  CountryCode CDATA #IMPLIED
+  AreaCode CDATA #IMPLIED
+  LocalNumber CDATA #IMPLIED">
+
+<!ENTITY % Role "Registrar|Registry|Whois|Query|CreateDomain
+                 |UpdateDomain|UpdateAnyDomainDisclosure|TransferDomain
+                 |CancelDomain|UncancelDomain|UpdateRegistrar|Administer
+                 |Supervisor|Connect|ReleaseDomain|QueryACL|UpdateACL
+                 |QueryRegACL|QueryAllDomains">
+
+<!ENTITY % ScheduledJob "BuildDnsZoneFiles|ReleaseDomains|RenewDomains
+                         |GenerateStatsReport|ExtractWebsiteData
+                         |Sunrise2ldRegistrarReport
+                         |DeleteUnusedHandles">
+
+<!ENTITY % DateRange "From?,To?">
+
+<!ENTITY % AccountingAction "Credit|Debit">
+
+<!-- == Root element ====================== -->
+
+<!ENTITY % requestElements "(DomainCreate|DomainUpdate|HandleCreate
+                             |HandleUpdate|HandleDetailsQry|Whois
+                             |DomainDetailsQry|ActionDetailsQry
+                             |UDAIValidQry|RegistrarCreate
+                             |RegistrarUpdate|RegistrarDetailsQry
+                             |RegistrarAccountQry|ResetMsgQ|GetMessages
+                             |AckMessage|SysParamsCreate|SysParamsUpdate
+                             |SysParamsQry|RunLogCreate|RunLogQry
+                             |ScheduleCreate|ScheduleCancel|ScheduleQry
+                             |ScheduleUpdate|BillingAmountUpdate
+                             |BillingAmountQry|DeferredIncomeSummaryQry
+                             |DeferredIncomeDetailQry
+                             |BilledUntilAdjustment
+                             |AdjustRegistrarAccount
+                             |AccessControlListQry|AccessControlListAdd
+                             |AccessControlListRemove)+">
+
+<!ENTITY % rootAttributes "
+  VerMajor %Number; #REQUIRED
+  VerMinor %Number; #REQUIRED
+  RegistrarId %RegistrarId; #IMPLIED">
+
+<!ELEMENT NZSRSRequest (%requestElements;)>
+<!ATTLIST NZSRSRequest
+  %rootAttributes;>
+
+<!ELEMENT SRSRequest (%requestElements;)>
+<!ATTLIST SRSRequest
+  %rootAttributes;>
+
+<!ELEMENT NZSRSResponse (Response+|Error)>
+<!ATTLIST NZSRSResponse
+  %rootAttributes;>
+
+<!ELEMENT SRSResponse (Response+|Error)>
+<!ATTLIST SRSResponse
+  %rootAttributes;>
+
+<!-- == Request actions =================== -->
+
+<!-- ++ Domain details update actions +++++ -->
+
+<!--
+Create new domain name (record)
+ActionResponse: (Domain|Error)
+-->
+
+<!ELEMENT DomainCreate (RegistrantContact,AdminContact?,
+                        TechnicalContact?,NameServers?,DNSSEC?,
+                        AuditText?)>
+<!ATTLIST DomainCreate
+  ActionId %UID; #REQUIRED
+  DomainName %DomainName; #REQUIRED
+  DomainNameUnicode %DomainNameUnicode; #IMPLIED
+  DomainNameLanguage %DomainNameLanguage; #IMPLIED
+  RegistrantRef %UID; #IMPLIED
+  Term %Term; #REQUIRED
+  Delegate (%Boolean;) '1'>
+
+<!--
+Update domain record
+Usage:
+  - update all domain records that match DomainNameFilter pattern
+    (? replaces a single character, * replaces a group of
+    characters); not all updates are possible (sensible)
+
+  Following actions are invoked by setting corresponding attribute
+  to %True; or opposite actions when set to %False; - omission of
+  the attribute means no action:
+  - newUDAI - force a new authentication UID to be generated
+  - renew
+  - cancel
+  - lock
+  Transfer to another registrar is an implied operation - if
+  non-owner registrar is doing an update, the domain is
+  transferred to the new registrar. For this operation UDAI is
+  required, and the DomainNameFilter must be a simple domain name
+  (no wildcards!)
+ActionResponse: (Domain+|Error)
+-->
+
+<!ELEMENT DomainUpdate (DomainNameFilter+,RegistrantContact?,
+                        AdminContact?,TechnicalContact?,NameServers?,
+                        DNSSEC?,AuditText?)>
+<!ATTLIST DomainUpdate
+  ActionId %UID; #REQUIRED
+  UDAI %UID; #IMPLIED
+  NewUDAI (%Boolean;) #IMPLIED
+  RegistrantRef %UID; #IMPLIED
+  Term %Term; #IMPLIED
+  Delegate (%Boolean;) #IMPLIED
+  Renew (%Boolean;) #IMPLIED
+  NoAutoRenew (%Boolean;) #IMPLIED
+  Lock (%Boolean;) #IMPLIED
+  Cancel (%Boolean;) #IMPLIED
+  Release (%Boolean;) #IMPLIED
+  DisclosureMask %Number; #IMPLIED
+  ConvertContactsToHandles (%Boolean;) #IMPLIED
+  FullResult (%Boolean;) '1'>
+
+<!ELEMENT HandleCreate ((%Contact;),AuditText?)>
+<!ATTLIST HandleCreate
+  ActionId %UID; #REQUIRED
+  HandleId %UID; #REQUIRED
+  %ContactAttrFields;>
+
+<!ELEMENT HandleUpdate ((%Contact;),AuditText?)>
+<!ATTLIST HandleUpdate
+  ActionId %UID; #REQUIRED
+  HandleId %UID; #REQUIRED
+  Delete (%Boolean;) #IMPLIED
+  %ContactAttrFields;>
+
+<!ELEMENT HandleDetailsQry (HandleIdFilter*,SearchDateRange?,
+                            ChangedInDateRange?,ContactFilter?)>
+<!ATTLIST HandleDetailsQry
+  QryId %UID; #IMPLIED
+  MaxResults %Number; #IMPLIED
+  SkipResults %Number; #IMPLIED
+  CountResults (%Boolean;) '0'>
+
+<!ELEMENT DomainNameFilter (#PCDATA)>
+
+<!-- ++ Domain details query actions  +++++ -->
+
+<!--
+Whois  (retrieve details of DomainName)
+ActionResponse: (Domain|Error)
+-->
+
+<!ELEMENT Whois EMPTY>
+<!ATTLIST Whois
+  QryId %UID; #IMPLIED
+  FullResult (%Boolean;) '1'
+  SourceIP CDATA #IMPLIED
+  DomainName %DomainName; #REQUIRED>
+
+<!--
+UDAIValidQry - enquire if the UDAI for a domain is correct
+ActionResponse: (UDAIValid)
+-->
+
+<!ELEMENT UDAIValidQry EMPTY>
+<!ATTLIST UDAIValidQry
+  QryId %UID; #IMPLIED
+  DomainName %DomainName; #REQUIRED
+  UDAI %UID; #REQUIRED>
+
+<!--
+General register query
+ActionResponse: (Domain*|Error)
+-->
+
+<!ELEMENT DomainDetailsQry (DomainNameFilter*,NameServerFilter?,
+                            DNSSECFilter?,RegistrantContactFilter?,
+                            AdminContactFilter?,TechnicalContactFilter?,
+                            ResultDateRange?,SearchDateRange?,
+                            ChangedInDateRange?,RegisteredDateRange?,
+                            LockedDateRange?,CancelledDateRange?,
+                            BilledUntilDateRange?,AuditTextFilter?,
+                            ActionIdFilter?,FieldList?)>
+<!ATTLIST DomainDetailsQry
+  QryId %UID; #IMPLIED
+  Status (%RegDomainStatus;) #IMPLIED
+  Delegate (%Boolean;) #IMPLIED
+  Term %Term; #IMPLIED
+  RegistrantRef %UID; #IMPLIED
+  MaxResults %Number; #IMPLIED
+  SkipResults %Number; #IMPLIED
+  ShowHistory (%Boolean;) #IMPLIED
+  CountResults (%Boolean;) '0'>
+
+<!ELEMENT AuditTextFilter (#PCDATA)>
+
+<!ELEMENT ActionIdFilter (#PCDATA)>
+
+<!--
+Query request - returns request-response pair
+ActionResponse: ((RawRequest,RawResponse)|Error)
+-->
+
+<!ELEMENT ActionDetailsQry EMPTY>
+<!ATTLIST ActionDetailsQry
+  QryId %UID; #IMPLIED
+  ActionId %UID; #REQUIRED
+  OriginatingRegistrarId %UID; #IMPLIED>
+
+<!--
+++ Registrar details update actions ++
+ActionResponse: (Registrar|Error)
+-->
+
+<!ELEMENT RegistrarCreate (RegistrarPublicContact,RegistrarSRSContact,
+                           DefaultTechnicalContact,EncryptKeys,EPPAuth?,
+                           Allowed2LDs?,Roles?,AuditText?)>
+<!ATTLIST RegistrarCreate
+  ActionId %UID; #REQUIRED
+  Name CDATA #REQUIRED
+  AccRef CDATA #REQUIRED
+  RegistrarId %RegistrarId; #REQUIRED
+  URL CDATA #IMPLIED>
+
+<!ELEMENT RegistrarUpdate (RegistrarPublicContact?,RegistrarSRSContact?,
+                           DefaultTechnicalContact?,EncryptKeys?,
+                           EPPAuth?,Allowed2LDs?,Roles?,AuditText?)>
+<!ATTLIST RegistrarUpdate
+  ActionId %UID; #REQUIRED
+  Name CDATA #IMPLIED
+  AccRef CDATA #IMPLIED
+  URL CDATA #IMPLIED>
+
+<!-- ++ Registrar details query actions +++ -->
+
+<!-- ActionResponse: (Registrar*|Error) -->
+
+<!ELEMENT RegistrarDetailsQry (ResultDateRange)?>
+<!ATTLIST RegistrarDetailsQry
+  QryId %UID; #IMPLIED
+  RegistrarId %RegistrarId; #IMPLIED
+  NameFilter CDATA #IMPLIED>
+
+<!--
+RegistrarAccountQry (obtain billing records)
+ActionResponse: (BillingTrans*|Error)
+-->
+
+<!ELEMENT RegistrarAccountQry (TransDateRange?,InvoiceDateRange?)>
+<!ATTLIST RegistrarAccountQry
+  QryId %UID; #IMPLIED
+  RegistrantRef %UID; #IMPLIED
+  DomainName %DomainName; #IMPLIED
+  InvoiceId %UID; #IMPLIED
+  MaxResults %Number; #IMPLIED
+  SkipResults %Number; #IMPLIED
+  TransStatus (%BillStatus;) #IMPLIED
+  CountResults (%Boolean;) '0'>
+
+<!--
+BillingAmount Transactions
+(To set the monthly charge for Billing)
+ActionResponse: (BillingAmount*|Error)
+-->
+
+<!ELEMENT BillingAmountUpdate (BillingAmount)>
+<!ATTLIST BillingAmountUpdate
+  ActionId %UID; #REQUIRED>
+
+<!ELEMENT BillingAmountQry EMPTY>
+<!ATTLIST BillingAmountQry
+  QryId %UID; #IMPLIED>
+
+<!ELEMENT BillingAmount (EffectiveDate)?>
+<!ATTLIST BillingAmount
+  Amount %Dollars; #REQUIRED>
+
+<!ELEMENT EffectiveDate EMPTY>
+<!ATTLIST EffectiveDate
+  %TimeStamp;>
+
+<!-- ++ Query date ranges +++++++++++++++++ -->
+
+<!ELEMENT ResultDateRange (%DateRange;)>
+
+<!ELEMENT SearchDateRange (%DateRange;)>
+
+<!ELEMENT ChangedInDateRange (%DateRange;)>
+
+<!ELEMENT RegisteredDateRange (%DateRange;)>
+
+<!ELEMENT CancelledDateRange (%DateRange;)>
+
+<!ELEMENT LockedDateRange (%DateRange;)>
+
+<!ELEMENT BilledUntilDateRange (%DateRange;)>
+
+<!ELEMENT InvoiceDateRange (%DateRange;)>
+
+<!ELEMENT TransDateRange (%DateRange;)>
+
+<!-- ++ Query field list ++++++++++++++++++ -->
+
+<!ELEMENT FieldList EMPTY>
+<!ATTLIST FieldList
+  Status (%Boolean;) #IMPLIED
+  NameServers (%Boolean;) #IMPLIED
+  DNSSEC (%Boolean;) #IMPLIED
+  RegistrantContact (%Boolean;) #IMPLIED
+  RegisteredDate (%Boolean;) #IMPLIED
+  AdminContact (%Boolean;) #IMPLIED
+  TechnicalContact (%Boolean;) #IMPLIED
+  LockedDate (%Boolean;) #IMPLIED
+  Delegate (%Boolean;) #IMPLIED
+  RegistrarId (%Boolean;) #IMPLIED
+  RegistrarName (%Boolean;) #IMPLIED
+  RegistrantRef (%Boolean;) #IMPLIED
+  LastActionId (%Boolean;) #IMPLIED
+  ChangedByRegistrarId (%Boolean;) #IMPLIED
+  Term (%Boolean;) #IMPLIED
+  BilledUntil (%Boolean;) #IMPLIED
+  CancelledDate (%Boolean;) #IMPLIED
+  AuditText (%Boolean;) #IMPLIED
+  EffectiveFrom (%Boolean;) #IMPLIED
+  DefaultContacts (%Boolean;) #IMPLIED>
+
+<!-- ++ Registry actions ++++++++++++++++++ -->
+
+<!-- ActionResponse: (SysParam*|Error) -->
+
+<!ELEMENT SysParamsCreate (SysParam+,AuditText?)>
+<!ATTLIST SysParamsCreate
+  ActionId %UID; #REQUIRED>
+
+<!ELEMENT SysParamsUpdate (SysParam+,AuditText?)>
+<!ATTLIST SysParamsUpdate
+  ActionId %UID; #REQUIRED>
+
+<!ELEMENT SysParamsQry EMPTY>
+<!ATTLIST SysParamsQry
+  QryId %UID; #IMPLIED>
+
+<!-- ActionResponse: (RunLog|Error) -->
+
+<!ELEMENT RunLogCreate (FirstRunDate,RunLog)>
+<!ATTLIST RunLogCreate
+  ActionId %UID; #REQUIRED>
+
+<!-- ActionResponse: (RunLog*|Error) -->
+
+<!ELEMENT RunLogQry (LogDateRange)?>
+<!ATTLIST RunLogQry
+  QryId %UID; #IMPLIED
+  ProcessName CDATA #IMPLIED
+  Parameters CDATA #IMPLIED>
+
+<!ELEMENT LogDateRange (%DateRange;)>
+
+<!-- ActionResponse: (Schedule|Error) -->
+
+<!ELEMENT ScheduleCreate (FirstRunDate,FinalRunDate?,AuditText?)>
+<!ATTLIST ScheduleCreate
+  ProcessName (%ScheduledJob;) #REQUIRED
+  Frequency CDATA #REQUIRED
+  Parameters CDATA #IMPLIED
+  ActionId %UID; #REQUIRED>
+
+<!ELEMENT ScheduleCancel (FirstRunDate,AuditText?)>
+<!ATTLIST ScheduleCancel
+  ActionId %UID; #REQUIRED
+  ProcessName (%ScheduledJob;) #REQUIRED
+  Parameters CDATA #IMPLIED>
+
+<!ELEMENT ScheduleUpdate (FirstRunDate,LastRunDate?,AuditText?)>
+<!ATTLIST ScheduleUpdate
+  ActionId %UID; #REQUIRED
+  Parameters CDATA #IMPLIED
+  Frequency CDATA #IMPLIED
+  ProcessName (%ScheduledJob;) #REQUIRED>
+
+<!ELEMENT FinalRunDate EMPTY>
+<!ATTLIST FinalRunDate
+  %TimeStamp;>
+
+<!ELEMENT ScheduleQry (ActiveOn?,FirstRunDate?)>
+<!ATTLIST ScheduleQry
+  QryId %UID; #IMPLIED
+  ProcessName CDATA #IMPLIED
+  Parameters CDATA #IMPLIED>
+
+<!ELEMENT ActiveOn EMPTY>
+<!ATTLIST ActiveOn
+  %TimeStamp;>
+
+<!ELEMENT DeferredIncomeSummaryQry EMPTY>
+<!ATTLIST DeferredIncomeSummaryQry
+  BaseMonth CDATA #REQUIRED
+  BaseYear CDATA #REQUIRED
+  IncomeMonth CDATA #REQUIRED
+  IncomeYear CDATA #REQUIRED
+  QryId %UID; #IMPLIED>
+
+<!ELEMENT DeferredRegistrarIncome EMPTY>
+<!ATTLIST DeferredRegistrarIncome
+  BaseMonth CDATA #REQUIRED
+  BaseYear CDATA #REQUIRED
+  IncomeMonth CDATA #REQUIRED
+  IncomeYear CDATA #REQUIRED
+  RegistrarId %RegistrarId; #REQUIRED
+  BilledAmount %Dollars; #REQUIRED
+  BilledCount %Number; #REQUIRED>
+
+<!ELEMENT DeferredIncomeDetailQry EMPTY>
+<!ATTLIST DeferredIncomeDetailQry
+  BaseMonth CDATA #REQUIRED
+  BaseYear CDATA #REQUIRED
+  IncomeMonth CDATA #REQUIRED
+  IncomeYear CDATA #REQUIRED
+  QryId %UID; #IMPLIED>
+
+<!ELEMENT BilledUntilAdjustment (NewBilledUntilDate,AuditText)>
+<!ATTLIST BilledUntilAdjustment
+  DomainName %DomainName; #REQUIRED
+  ActionId %UID; #REQUIRED>
+
+<!ELEMENT NewBilledUntilDate EMPTY>
+<!ATTLIST NewBilledUntilDate
+  %TimeStamp;>
+
+<!ELEMENT RunDate EMPTY>
+<!ATTLIST RunDate
+  %TimeStamp;>
+
+<!ELEMENT AdjustRegistrarAccount (TransactionDate,BillPeriodStart,
+                                  BillPeriodEnd,AuditText)>
+<!ATTLIST AdjustRegistrarAccount
+  RegistrarId %RegistrarId; #REQUIRED
+  DomainName %DomainName; #REQUIRED
+  ActionId %UID; #REQUIRED
+  Months %Number; #REQUIRED
+  ActionType (%AccountingAction;) #REQUIRED>
+
+<!ELEMENT TransactionDate EMPTY>
+<!ATTLIST TransactionDate
+  %TimeStamp;>
+
+<!ENTITY % AccessControlListContentFilter "DomainNameFilter
+                                           |RegistrarIdFilter
+                                           |AddressFilter">
+
+<!ELEMENT AccessControlListQry (%AccessControlListContentFilter;)*>
+<!ATTLIST AccessControlListQry
+  QryId %UID; #IMPLIED
+  Resource CDATA #IMPLIED
+  List CDATA #IMPLIED
+  Type CDATA #IMPLIED
+  FullResult (%Boolean;) '0'>
+
+<!ELEMENT RegistrarIdFilter (#PCDATA)>
+
+<!ELEMENT AddressFilter (#PCDATA)>
+
+<!ELEMENT AccessControlListRemove (AccessControlListEntry*,AuditText?)>
+<!ATTLIST AccessControlListRemove
+  Resource CDATA #REQUIRED
+  List CDATA #REQUIRED
+  ActionId %UID; #REQUIRED
+  FullResult (%Boolean;) '1'>
+
+<!ELEMENT AccessControlListAdd (AccessControlListEntry+,AuditText?)>
+<!ATTLIST AccessControlListAdd
+  Resource CDATA #REQUIRED
+  List CDATA #REQUIRED
+  ActionId %UID; #REQUIRED
+  FullResult (%Boolean;) '1'>
+
+<!ELEMENT AccessControlList (AccessControlListEntry)*>
+<!ATTLIST AccessControlList
+  Resource CDATA #REQUIRED
+  List CDATA #REQUIRED
+  Size %Number; #IMPLIED
+  SizeChange %Number; #IMPLIED
+  Type CDATA #IMPLIED>
+
+<!ELEMENT AccessControlListEntry (EffectiveDate)?>
+<!ATTLIST AccessControlListEntry
+  Address CDATA #IMPLIED
+  DomainName CDATA #IMPLIED
+  RegistrarId %RegistrarId; #IMPLIED
+  Comment CDATA #IMPLIED>
+
+<!-- == GetMessages ======================= -->
+
+<!--
+Get message by UID, or messages since date/time for the Effective
+registrar
+
+Non-DTD enforced compliance:
+  - either UID or date range must be supplied
+ActionResponses: (Response|Error)
+-->
+
+<!ELEMENT GetMessages (TransDateRange?,AuditTextFilter?,TypeFilter*)>
+<!ATTLIST GetMessages
+  QryId %UID; #IMPLIED
+  OriginatingRegistrarId %RegistrarIdOrOTHERS; #IMPLIED
+  ActionId %UID; #IMPLIED
+  RecipientRegistrarId %RegistrarId; #IMPLIED
+  MaxResults %Number; #IMPLIED
+  SkipResults %Number; #IMPLIED
+  CountResults (%Boolean;) '0'
+  QueueMode (%Boolean;) '0'>
+
+<!ENTITY % GetMessagesTypes "third-party|server-generated-data">
+
+<!ELEMENT TypeFilter EMPTY>
+<!ATTLIST TypeFilter
+  Type (%GetMessagesTypes;) #REQUIRED>
+
+<!-- == AckMessage ======================== -->
+
+<!--
+ACK message by originating RegistrarId/UID
+ActionResponse: (Response|Error)
+-->
+
+<!ELEMENT AckMessage EMPTY>
+<!ATTLIST AckMessage
+  ActionId %UID; #REQUIRED
+  OriginatingRegistrarId %RegistrarId; #REQUIRED
+  TransId %UID; #REQUIRED>
+
+<!-- == ResetMsgQ ======================== -->
+
+<!--
+Reset message Queue by originating RegistrarId
+ActionResponse: (Response|Error)
+-->
+
+<!ELEMENT ResetMsgQ EMPTY>
+<!ATTLIST ResetMsgQ
+  ActionId %UID; #REQUIRED>
+
+<!-- == ActionResponse ==================== -->
+
+<!--
+++ Response ++++++++++++++++++++++++++
+This is a "one size fits all" response, which can contain any type
+of response.  Errors to individual actions can be specified within
+the response (errors in parsing the total request are handled by
+the error ELEMENT).  The response may contain multiple domain
+records (eg, for queries), and may contain a complete history of
+the domain.
+The registrar and id will match those passed in for most requests,
+but will be present to uniquely identify a getmsg response.  Most
+requests will result in a single response; but getmsg requests for
+messages since a date/time will result in one response per
+response found.
+The DomainTransfer differs from the rest in that it is not a
+direct response to an action, but a message for the registrar
+generated by an action of another registrar. It may be returned in
+response to a GetMessages action.
+-->
+
+<!ENTITY % DomainWriteAction "DomainCreate|DomainUpdate">
+
+<!ENTITY % DomainQueryAction "Whois|DomainDetailsQry|ActionDetailsQry
+                              |UDAIValidQry">
+
+<!ENTITY % HandleWriteAction "HandleCreate|HandleUpdate">
+
+<!ENTITY % HandleQueryAction "HandleDetailsQry">
+
+<!ENTITY % MessageWriteAction "AckMessage|ResetMsgQ">
+
+<!ENTITY % MessageQueryAction "GetMessages">
+
+<!ENTITY % RegistrarWriteAction "RegistrarCreate|RegistrarUpdate">
+
+<!ENTITY % RegistrarQueryAction "RegistrarDetailsQry
+                                 |RegistrarAccountQry">
+
+<!ENTITY % RegistryAction "SysParamsUpdate|SysParamsCreate|SysParamsQry
+                           |RunLogCreate|RunLogQry|ScheduleCreate
+                           |ScheduleCancel|ScheduleQry|ScheduleUpdate
+                           |BillingExtract|SetBillingAmount
+                           |BillingAmountQry|DeferredIncomeSummaryQry
+                           |DeferredIncomeDetailQry
+                           |BilledUntilAdjustment|AdjustRegistrarAccount
+                           |AccessControlListQry|AccessControlListAdd
+                           |AccessControlListRemove
+                           |BillingAmountUpdate">
+
+<!ENTITY % Action "%DomainWriteAction;|%DomainQueryAction;
+                   |%HandleWriteAction;|%HandleQueryAction;
+                   |%RegistrarWriteAction;|%RegistrarQueryAction;
+                   |%MessageWriteAction;|%MessageQueryAction;
+                   |%RegistryAction;">
+
+<!ENTITY % ActionEtc "%Action;|UnknownTransaction|DomainTransfer">
+
+<!ELEMENT Response (FeTimeStamp,
+                    (Response*|(%ActionResponse;)|AckResponse)?)>
+<!ATTLIST Response
+  Action (%ActionEtc;) #REQUIRED
+  FeId %Number; #REQUIRED
+  FeSeq %Number; #REQUIRED
+  OrigRegistrarId %RegistrarId; #REQUIRED
+  TransId %UID; #IMPLIED
+  Rows %Number; #IMPLIED
+  Count %Number; #IMPLIED
+  MoreRowsAvailable (%Boolean;) #IMPLIED
+  RecipientRegistrarId %RegistrarId; #IMPLIED>
+
+<!ELEMENT AckResponse EMPTY>
+<!ATTLIST AckResponse
+  OriginatingRegistrarId %RegistrarId; #REQUIRED
+  TransId %UID; #REQUIRED>
+
+<!--
+++ Error +++++++++++++++++++++++++++++
+Errors can be either specific to a requested action, or generic to
+the whole request.  A globally unique errorid identifies the error
+that occured, and a human-readable string describing the error is
+enclosed.
+The errorids are assigned like HTTP, where there are three digits
+to identify the error.  The first digit indicates approximately
+the status (success, failure, etc); the second is a subcategory of
+that, and the third is used for fine detail indications.  The
+exact list of errors is in SRS::Error module.
+-->
+
+<!ELEMENT Error (Description,ErrorDetails*)>
+<!ATTLIST Error
+  ErrorId %UID; #REQUIRED
+  Severity %Number; #REQUIRED
+  Hint %UID; #REQUIRED>
+
+<!ELEMENT Description (#PCDATA)>
+
+<!ELEMENT ErrorDetails (#PCDATA)>
+
+<!ELEMENT FeTimeStamp EMPTY>
+<!ATTLIST FeTimeStamp
+  %TimeStamp;>
+
+<!-- == Lower level elements ============== -->
+
+<!--
+Zone information: fields held in the register, that can be
+obtained through the registrar/registry protocol and/or are
+maintainable through the registry protocol.
+-->
+
+<!--
+++ Domain details ++++++++++++++++++++
+NOTE: the domain authid (UDAI) is sent ONLY if it has been newly
+generated; otherwise it is assumed that the registrar has the
+previous value cached.
+-->
+
+<!ELEMENT Domain (NameServers?,Linked3lds?,DNSSEC?,RegistrantContact?,
+                  RegistrarPublicContact?,AdminContact?,
+                  TechnicalContact?,BilledUntil?,RegisteredDate?,
+                  CancelledDate?,LockedDate?,DefaultContacts?,
+                  AuditDetails?)>
+<!ATTLIST Domain
+  DomainName %DomainName; #REQUIRED
+  DomainNameUnicode %DomainNameUnicode; #IMPLIED
+  DomainNameUnicodeHex %DomainNameUnicodeHex; #IMPLIED
+  DomainNameLanguage %DomainNameLanguage; #IMPLIED
+  RegistrantRef %UID; #IMPLIED
+  RegistrarName CDATA #IMPLIED
+  Status %DomainStatus; #IMPLIED
+  Delegate (%Boolean;) #IMPLIED
+  Term %Term; #IMPLIED
+  RegistrarId %RegistrarId; #IMPLIED
+  UDAI %UID; #IMPLIED
+  DisclosureMask %Number; #IMPLIED
+  RegistrationId %Number; #IMPLIED>
+
+<!ELEMENT BilledUntil EMPTY>
+<!ATTLIST BilledUntil
+  %TimeStamp;>
+
+<!ELEMENT LockedDate EMPTY>
+<!ATTLIST LockedDate
+  %TimeStamp;>
+
+<!ELEMENT RegisteredDate EMPTY>
+<!ATTLIST RegisteredDate
+  %TimeStamp;>
+
+<!ELEMENT CancelledDate EMPTY>
+<!ATTLIST CancelledDate
+  %TimeStamp;>
+
+<!ELEMENT DomainTransfer (TransferredDomain)+>
+<!ATTLIST DomainTransfer
+  RegistrarName CDATA #REQUIRED
+  %TimeStamp;>
+
+<!ELEMENT TransferredDomain (#PCDATA)>
+
+<!ELEMENT UDAIValid EMPTY>
+<!ATTLIST UDAIValid
+  Valid (%Boolean;) #REQUIRED>
+
+<!--
+Name servers
+The IP address should be included if and only if the FQDN is
+within the zone that it is associated with.
+The IP6Addr may be in any of the formats specified by RFC 2373:
+    1.  X:X:X:X:X:X:X:X         (Fully Specified)
+    2.  X:X:X::X                ('::' denotes compressed zeroes )
+    3.  X:X:X:X:X:X:d.d.d.d     ('d.d.d.d' denotes an IP4 Address)
+-->
+
+<!ELEMENT NameServers (Server)*>
+
+<!ELEMENT Server EMPTY>
+<!ATTLIST Server
+  FQDN CDATA #REQUIRED
+  IP4Addr CDATA #IMPLIED
+  IP6Addr CDATA #IMPLIED>
+
+<!--
+Name server Filter
+As above, but a filter for a search
+-->
+
+<!ELEMENT NameServerFilter (ServerFilter)+>
+
+<!ELEMENT ServerFilter EMPTY>
+<!ATTLIST ServerFilter
+  FQDN CDATA #IMPLIED
+  IP4Addr CDATA #IMPLIED
+  IP6Addr CDATA #IMPLIED>
+
+<!-- Linked3ld lists -->
+
+<!ELEMENT Linked3lds (Linked3ld)*>
+
+<!ELEMENT Linked3ld EMPTY>
+<!ATTLIST Linked3ld
+  domainname %DomainName; #REQUIRED>
+
+<!-- DS for DNSSEC support -->
+
+<!ELEMENT DNSSEC (DS)*>
+
+<!ELEMENT DS (Digest)>
+<!ATTLIST DS
+  KeyTag %Number; #REQUIRED
+  Algorithm %Number; #REQUIRED
+  DigestType %Number; #REQUIRED>
+
+<!ELEMENT Digest (#PCDATA)>
+
+<!--
+DNSSEC Filter
+As above, but a filter for a search
+-->
+
+<!ELEMENT DNSSECFilter (DSFilter)+>
+
+<!ELEMENT DSFilter (Digest)?>
+<!ATTLIST DSFilter
+  KeyTag %Number; #IMPLIED
+  Algorithm %Number; #IMPLIED
+  DigestType %Number; #IMPLIED>
+
+<!ELEMENT DefaultContacts EMPTY>
+<!ATTLIST DefaultContacts
+  AdminContact (%Boolean;) #IMPLIED
+  TechnicalContact (%Boolean;) #IMPLIED>
+
+<!-- ++ Registrar details +++++++++++++++++ -->
+
+<!ELEMENT Registrar (RegistrarPublicContact,RegistrarSRSContact,
+                     DefaultTechnicalContact,EncryptKeys,EPPAuth?,
+                     Allowed2LDs?,Roles?,AuditDetails?)>
+<!ATTLIST Registrar
+  RegistrarId %RegistrarId; #REQUIRED
+  Name CDATA #REQUIRED
+  AccRef CDATA #REQUIRED
+  URL CDATA #IMPLIED>
+
+<!ELEMENT Allowed2LDs (SecondLD)*>
+
+<!ELEMENT SecondLD EMPTY>
+<!ATTLIST SecondLD
+  DomainName %DomainName; #REQUIRED>
+
+<!ELEMENT Roles (Role)*>
+
+<!ELEMENT Role EMPTY>
+<!ATTLIST Role
+  RoleName (%Role;) #REQUIRED>
+
+<!ELEMENT EncryptKeys (EncryptKey)*>
+
+<!ELEMENT EncryptKey (#PCDATA)>
+
+<!ELEMENT EPPAuth EMPTY>
+<!ATTLIST EPPAuth
+  Password CDATA #REQUIRED>
+
+<!-- ++ Billing transaction +++++++++++++++ -->
+
+<!ELEMENT BillingTrans (InvoiceDate?,TransDate,BillPeriodStart,
+                        BillPeriodEnd)>
+<!ATTLIST BillingTrans
+  RegistrarId %RegistrarId; #REQUIRED
+  Type CDATA #REQUIRED
+  TransStatus (%BillStatus;) #REQUIRED
+  DomainName %DomainName; #REQUIRED
+  RegistrantRef %UID; #IMPLIED
+  BillingTerm %Term; #REQUIRED
+  InvoiceId %UID; #IMPLIED
+  Amount %Dollars; #REQUIRED>
+
+<!ELEMENT InvoiceDate EMPTY>
+<!ATTLIST InvoiceDate
+  %TimeStamp;>
+
+<!ELEMENT TransDate EMPTY>
+<!ATTLIST TransDate
+  %TimeStamp;>
+
+<!ELEMENT BillPeriodStart EMPTY>
+<!ATTLIST BillPeriodStart
+  %TimeStamp;>
+
+<!ELEMENT BillPeriodEnd EMPTY>
+<!ATTLIST BillPeriodEnd
+  %TimeStamp;>
+
+<!-- ++ Contact information: for registrant, admin, technical ++ -->
+
+<!ELEMENT RegistrantContact (%Contact;)>
+<!ATTLIST RegistrantContact
+  %ContactAttr;>
+
+<!ELEMENT RegistrantContactFilter (%ContactFilter;)>
+<!ATTLIST RegistrantContactFilter
+  %ContactAttrFilter;>
+
+<!ELEMENT AdminContact (%Contact;)>
+<!ATTLIST AdminContact
+  %ContactAttr;>
+
+<!ELEMENT AdminContactFilter (%ContactFilter;)>
+<!ATTLIST AdminContactFilter
+  %ContactAttrFilter;>
+
+<!ELEMENT TechnicalContact (%Contact;)>
+<!ATTLIST TechnicalContact
+  %ContactAttr;>
+
+<!ELEMENT TechnicalContactFilter (%ContactFilter;)>
+<!ATTLIST TechnicalContactFilter
+  %ContactAttrFilter;>
+
+<!ELEMENT ChangedDomains (Domain)*>
+
+<!ELEMENT CreatedDate EMPTY>
+<!ATTLIST CreatedDate
+  %TimeStamp;>
+
+<!ELEMENT Handle ((%Contact;),CreatedDate,AuditDetails?,
+                  ChangedDomains?)>
+<!ATTLIST Handle
+  RegistrarId %RegistrarId; #REQUIRED
+  %ContactAttr;>
+
+<!ELEMENT Message (Response)>
+<!ATTLIST Message
+  Remaining %Number; #IMPLIED>
+
+<!ELEMENT HandleIdFilter (#PCDATA)>
+
+<!ELEMENT ContactFilter (%ContactFilter;)>
+<!ATTLIST ContactFilter
+  %ContactAttrFilter;>
+
+<!ELEMENT RegistrarPublicContact (%Contact;)>
+<!ATTLIST RegistrarPublicContact
+  %ContactAttr;>
+
+<!ELEMENT DefaultTechnicalContact (%Contact;)>
+<!ATTLIST DefaultTechnicalContact
+  %ContactAttr;>
+
+<!ELEMENT RegistrarSRSContact (%Contact;)>
+<!ATTLIST RegistrarSRSContact
+  %ContactAttr;>
+
+<!-- Country is an ISO 3166-1 country code -->
+
+<!ELEMENT PostalAddress EMPTY>
+<!ATTLIST PostalAddress
+  Address1 CDATA #IMPLIED
+  Address2 CDATA #IMPLIED
+  City CDATA #IMPLIED
+  Province CDATA #IMPLIED
+  CountryCode CDATA #IMPLIED
+  PostalCode CDATA #IMPLIED>
+
+<!ELEMENT PostalAddressFilter EMPTY>
+<!ATTLIST PostalAddressFilter
+  Address1 CDATA #IMPLIED
+  Address2 CDATA #IMPLIED
+  City CDATA #IMPLIED
+  Province CDATA #IMPLIED
+  CountryCode CDATA #IMPLIED
+  PostalCode CDATA #IMPLIED>
+
+<!ELEMENT Phone EMPTY>
+<!ATTLIST Phone
+  %PhoneAttr;>
+
+<!ELEMENT Fax EMPTY>
+<!ATTLIST Fax
+  %PhoneAttr;>
+
+<!-- ++ Raw responses +++++++++++++++++++++ -->
+
+<!ELEMENT RawRequest (XML,Signature)>
+
+<!ELEMENT RawResponse (XML,Signature)>
+
+<!ELEMENT XML (#PCDATA)>
+
+<!ELEMENT Signature (#PCDATA)>
+
+<!-- ++ System Parameters +++++++++++++++++ -->
+
+<!ELEMENT SysParam (ParamValue,AuditDetails?)>
+<!ATTLIST SysParam
+  Name CDATA #REQUIRED>
+
+<!ELEMENT ParamValue (#PCDATA)>
+
+<!-- ++ Run Log +++++++++++++++++++++++++++ -->
+
+<!ELEMENT RunLog (RunLogTimeStamp,RunLogDetails?)>
+<!ATTLIST RunLog
+  ProcessName CDATA #REQUIRED
+  Parameters CDATA #IMPLIED
+  ActionStatus CDATA #REQUIRED
+  Control CDATA #IMPLIED>
+
+<!ELEMENT RunLogDetails (#PCDATA)>
+
+<!ELEMENT RunLogTimeStamp EMPTY>
+<!ATTLIST RunLogTimeStamp
+  %TimeStamp;>
+
+<!-- ++ Schedule ++++++++++++++++++++++++++ -->
+
+<!-- Frequency in ? -->
+
+<!ELEMENT Schedule (FirstRunDate,FinalRunDate?,CreateAuditText?,
+                    CancelAuditText?)>
+<!ATTLIST Schedule
+  ProcessName (%ScheduledJob;) #REQUIRED
+  Frequency CDATA #REQUIRED
+  Parameters CDATA #IMPLIED
+  CreateByRegistrarId %UID; #REQUIRED
+  CreateActionId %UID; #REQUIRED
+  CancelByRegistrarId %UID; #IMPLIED
+  CancelActionId %UID; #IMPLIED>
+
+<!ELEMENT FirstRunDate EMPTY>
+<!ATTLIST FirstRunDate
+  %TimeStamp;>
+
+<!ELEMENT LastRunDate EMPTY>
+<!ATTLIST LastRunDate
+  %TimeStamp;>
+
+<!ELEMENT CreateAuditText (#PCDATA)>
+
+<!ELEMENT CancelAuditText (#PCDATA)>
+
+<!-- ++ Audit details +++++++++++++++++++++ -->
+
+<!ELEMENT AuditDetails (AuditTime?,AuditText?)>
+<!ATTLIST AuditDetails
+  RegistrarId CDATA #IMPLIED
+  ActionId %UID; #IMPLIED>
+
+<!ELEMENT AuditTime (%DateRange;)>
+
+<!ELEMENT AuditText (#PCDATA)>
+
+<!-- == Various =========================== -->
+
+<!ELEMENT From EMPTY>
+<!ATTLIST From
+  %TimeStamp;>
+
+<!ELEMENT To EMPTY>
+<!ATTLIST To
+  %TimeStamp;>

@@ -1,0 +1,80 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}" {% if target_registrar_id %} RegistrarId="{{ target_registrar_id }}" {% endif %}>
+  <DomainCreate ActionId="{{ action_id }}" DomainName="{{ domain_name }}" {% if domain_name_unicode %} DomainNameUnicode="{{ domain_name_unicode }}" {% endif %} Term="{{ term }}"
+                {% if delegate is defined %} Delegate="{{ delegate | int }}" {% endif %}
+                {% if registrant_ref %} RegistrantRef="{{ registrant_ref }}" {% endif %}>
+    {% if registrant.handle_id %}
+      <RegistrantContact HandleId="{{ registrant.handle_id }}" />
+    {% else %}
+      <RegistrantContact Name="{{ registrant.name }}" Email="{{ registrant.email_address }}"
+                         {% if registrant.privacy is defined %} Privacy="{{ registrant.privacy | int }}" {% endif %}>
+        <PostalAddress Address1="{{ registrant.postal_address1 }}"
+                       {% if registrant.postal_address2 %} Address2="{{ registrant.postal_address2 }}" {% endif %}
+                       City="{{ registrant.postal_city }}"
+                       {% if registrant.postal_province %} Province="{{ registrant.postal_province }}" {% endif %}
+                       CountryCode="{{ registrant.postal_country }}"
+                       {% if registrant.postal_code %} PostCode="{{ registrant.postal_code }}" {% endif %}/>
+        <Phone CountryCode="{{ registrant.phone.country_code }}" AreaCode="{{ registrant.phone.area_code }}" LocalNumber="{{ registrant.phone.local_number }}"/>
+        {% if registrant.fax %}
+          <Fax CountryCode="{{ registrant.fax.country_code }}" AreaCode="{{ registrant.fax.area_code }}" LocalNumber="{{ registrant.fax.local_number }}"/>
+        {% endif %}
+      </RegistrantContact>
+    {% endif %}
+    {% if admin %}
+      {% if admin.handle_id %}
+        <AdminContact HandleId="{{ admin.handle_id }}" />
+      {% else %}
+        <AdminContact Name="{{ admin.name }}" Email="{{ admin.email_address }}"
+                      {% if admin.privacy is defined %} Privacy="{{ admin.privacy | int }}" {% endif %}>
+          <PostalAddress Address1="{{ admin.postal_address1 }}"
+                         {% if admin.postal_address2 %} Address2="{{ admin.postal_address2 }}" {% endif %}
+                         City="{{ admin.postal_city }}"
+                         {% if admin.postal_province %} Province="{{ admin.postal_province }}" {% endif %}
+                         CountryCode="{{ admin.postal_country }}"
+                         {% if admin.postal_code %} PostCode="{{ admin.postal_code }}" {% endif %}/>
+          <Phone CountryCode="{{ admin.phone.country_code }}" AreaCode="{{ admin.phone.area_code }}" LocalNumber="{{ admin.phone.local_number }}"/>
+          {% if admin.fax %}
+            <Fax CountryCode="{{ admin.fax.country_code }}" AreaCode="{{ admin.fax.area_code }}" LocalNumber="{{ admin.fax.local_number }}"/>
+          {% endif %}
+        </AdminContact>
+      {% endif %}
+    {% endif %}
+    {% if technical %}
+      {% if technical.handle_id %}
+        <TechnicalContact HandleId="{{ technical.handle_id }}" />
+      {% else %}
+        <TechnicalContact Name="{{ technical.name }}" Email="{{ technical.email_address }}"
+                          {% if technical.privacy is defined %} Privacy="{{ technical.privacy | int }}" {% endif %}>
+          <PostalAddress Address1="{{ technical.postal_address1 }}"
+                         {% if technical.postal_address2 %} Address2="{{ technical.postal_address2 }}" {% endif %}
+                         City="{{ technical.postal_city }}"
+                         {% if technical.postal_province %} Province="{{ technical.postal_province }}" {% endif %}
+                         CountryCode="{{ technical.postal_country }}"
+                         {% if technical.postal_code %} PostCode="{{ technical.postal_code }}" {% endif %}/>
+          <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
+          {% if technical.fax %}
+            <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}"/>
+          {% endif %}
+        </TechnicalContact>
+      {% endif %}
+    {% endif %}
+    {% if name_servers %}
+      <NameServers>
+        {% for name_server in name_servers %}
+          <Server FQDN="{{ name_server.hostname }}"
+                  {% if name_server.ip4_address %} IP4Address="{{ name_server.ip4_address }}" {% endif %}
+                  {% if name_server.ip6_address %} IP6Address="{{ name_server.ip6_address }}" {% endif %}/>
+        {% endfor %}
+      </NameServers>
+    {% endif %}
+    {% if dnssec_keys %}
+      <DNSSEC>
+        {% for dnssec_key in dnssec_keys %}
+          <DS KeyTag="{{ dnssec_key.key_tag }}" Algorithm="{{ dnssec_key.algorithm }}" DigestType="{{ dnssec_key.digest_type }}">
+            <Digest>{{ dnssec_key.digest }}</Digest>
+          </DS>
+        {% endfor %}
+      </DNSSEC>
+    {% endif %}
+    {% if audit_text %} <AuditText>{{ audit_text }}</AuditText> {% endif %}
+  </DomainCreate>
+</NZSRSRequest>

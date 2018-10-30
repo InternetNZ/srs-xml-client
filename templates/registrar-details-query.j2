@@ -1,0 +1,15 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}">
+  <RegistrarDetailsQry {% if target_registrar_id %} RegistrarId="{{ target_registrar_id }}" {% endif %}
+                       {% if registrar_name %} NameFilter="{{ registrar_name }}" {% endif %}>
+    {% if results_from or results_to %}
+      <ResultDateRange>
+        {% if results_from %}
+          <From Year="{{ results_from.year }}" Month="{{ results_from.month }}" Day="{{ results_from.day }}" Hour="{{ results_from.hour }}" Minute="{{ results_from.minute }}" Second="{{ results_from.second }}" {% if results_from.time_zone %} TimeZoneOffset="{{ results_from.time_zone }}" {% endif %}/>
+        {% endif %}
+        {% if results_to %}
+          <To Year="{{ results_to.year }}" Month="{{ results_to.month }}" Day="{{ results_to.day }}" Hour="{{ results_to.hour }}" Minute="{{ results_to.minute }}" Second="{{ results_to.second }}" {% if results_to.time_zone %} TimeZoneOffset="{{ results_to.time_zone }}" {% endif %}/>
+        {% endif %}
+      </ResultDateRange>
+    {% endif %}
+  </RegistrarDetailsQry>
+</NZSRSRequest>

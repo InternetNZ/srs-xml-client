@@ -1,0 +1,109 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}" {% if target_registrar_id %} RegistrarId="{{ target_registrar_id }}" {% endif %}>
+  <RegistrarUpdate ActionId="{{ action_id }}"
+                   {% if registrar_name %} Name="{{ registrar_name }}" {% endif %}
+                   {% if account_ref %} AccRef="{{ account_ref }}" {% endif %}
+                   {% if website %} URL="{{ website }}" {% endif %}>
+    {% if public %}
+      <RegistrarPublicContact Name="{{ public.name }}" Email="{{ public.email_address }}">
+        {% if public.postal_address1 or public.postal_city or public.country %}
+          <PostalAddress Address1="{{ public.postal_address1 }}"
+                         {% if public.postal_address2 or public.no_postal_address2 %} Address2="{{ public.postal_address2 }}" {% endif %}
+                         City="{{ public.postal_city }}"
+                         {% if public.postal_province or public.no_postal_province %} Province="{{ public.postal_province }}" {% endif %}
+                         CountryCode="{{ public.postal_country }}"
+                         {% if public.postal_code or public.no_postal_code %} PostCode="{{ public.postal_code }}" {% endif %}/>
+        {% endif %}
+        {% if public.phone %}
+          <Phone CountryCode="{{ public.phone.country_code }}" AreaCode="{{ public.phone.area_code }}" LocalNumber="{{ public.phone.local_number }}"/>
+        {% endif %} 
+        {% if public.fax %}
+          <Fax CountryCode="{{ public.fax.country_code }}" AreaCode="{{ public.fax.area_code }}" LocalNumber="{{ public.fax.local_number }}"/>
+        {% elif public.no_fax %}
+          <Fax />
+        {% endif %}
+      </RegistrarPublicContact>
+    {% endif %}
+    {% if private %}
+      <RegistrarSRSContact Name="{{ private.name }}" Email="{{ private.email_address }}">
+        {% if private.postal_address1 or private.postal_city or private.country %}
+          <PostalAddress Address1="{{ private.postal_address1 }}"
+                         {% if private.postal_address2 or private.no_postal_address2 %} Address2="{{ private.postal_address2 }}" {% endif %}
+                         City="{{ private.postal_city }}"
+                         {% if private.postal_province or private.no_postal_province %} Province="{{ private.postal_province }}" {% endif %}
+                         CountryCode="{{ private.postal_country }}"
+                         {% if private.postal_code or private.no_postal_code %} PostCode="{{ private.postal_code }}" {% endif %}/>
+        {% endif %}
+        {% if private.phone %}
+          <Phone CountryCode="{{ private.phone.country_code }}" AreaCode="{{ private.phone.area_code }}" LocalNumber="{{ private.phone.local_number }}"/>
+        {% endif %} 
+        {% if private.fax %}
+          <Fax CountryCode="{{ private.fax.country_code }}" AreaCode="{{ private.fax.area_code }}" LocalNumber="{{ private.fax.local_number }}"/>
+        {% elif private.no_fax %}
+          <Fax />
+        {% endif %}
+      </RegistrarSRSContact>
+    {% endif %}
+    {% if technical %}
+      <DefaultTechnicalContact Name="{{ technical.name }}" Email="{{ technical.email_address }}">
+        {% if technical.postal_address1 or technical.postal_city or technical.postal_country %}
+          <PostalAddress Address1="{{ technical.postal_address1 }}"
+                         {% if technical.postal_address2 or technical.no_postal_address2 %} Address2="{{ technical.postal_address2 }}" {% endif %}
+                         City="{{ technical.postal_city }}"
+                         {% if technical.postal_province or technical.no_postal_province %} Province="{{ technical.postal_province }}" {% endif %}
+                         CountryCode="{{ technical.postal_country }}"
+                         {% if technical.postal_code or technical.no_postal_code %} PostCode="{{ technical.postal_code }}" {% endif %}/>
+        {% endif %}
+        {% if technical.phone %}
+          <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
+        {% endif %} 
+        {% if technical.fax %}
+          <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}"/>
+        {% elif technical.no_fax %}
+          <Fax />
+        {% endif %}
+      </DefaultTechnicalContact>
+    {% endif %}
+    {% if pgp_keys %}
+      <EncryptKeys>
+        {% for pgp_key in pgp_keys %}
+          <EncryptKey>{{ pgp_key }}</EncryptKey>
+        {% endfor %}
+      </EncryptKeys>
+    {% elif no_pgp_keys %}
+      <EncryptKeys />
+    {% endif %}
+    {% if password or no_password %} <EPPAuth Password="{{ password }}" /> {% endif %}
+    {% if allowed_2lds %}
+      <Allowed2LDs>
+        {% for allowed_2ld in allowed_2lds %}
+          <SecondLD DomainName="{{ allowed_2ld }}" />
+        {% endfor %}
+      </Allowed2LDs>
+    {% elif no_allowed_2lds %}
+      <Allowed2LDs />
+    {% endif %}
+    {% if roles %}
+      <Roles>
+        {% if roles.connect %} <Role RoleName="Connect" /> {% endif %}
+        {% if roles.registry %} <Role RoleName="Registry" /> {% endif %}
+        {% if roles.registrar %} <Role RoleName="Registrar" /> {% endif %}
+        {% if roles.create_domain %} <Role RoleName="CreateDomain" /> {% endif %}
+        {% if roles.update_domain %} <Role RoleName="UpdateDomain" /> {% endif %}
+        {% if roles.update_disclosure %} <Role RoleName="UpdateAnyDomainDisclosure" /> {% endif %}
+        {% if roles.transfer_domain %} <Role RoleName="TransferDomain" /> {% endif %}
+        {% if roles.update_registrar %} <Role RoleName="UpdateRegistrar" /> {% endif %}
+        {% if roles.whois %} <Role RoleName="Whois" /> {% endif %}
+        {% if roles.query_domain %} <Role RoleName="Query" /> {% endif %}
+        {% if roles.query_all_domains %} <Role RoleName="QueryAllDomains" /> {% endif %}
+        {% if roles.administer %} <Role RoleName="Administer" /> {% endif %}
+        {% if roles.supervisor %} <Role RoleName="Supervisor" /> {% endif %}
+        {% if roles.query_acl %} <Role RoleName="QueryACL" /> {% endif %}
+        {% if roles.query_reg_acl %} <Role RoleName="QueryRegACL" /> {% endif %}
+        {% if roles.update_acl %} <Role RoleName="UpdateACL" /> {% endif %}
+      </Roles>
+    {% elif no_roles %}
+      <Roles />
+    {% endif %}
+    {% if audit_text %} <AuditText>{{ audit_text }}</AuditText> {% endif %}
+  </RegistrarUpdate>
+</NZSRSRequest>

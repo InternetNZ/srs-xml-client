@@ -1,0 +1,13 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}">
+  <AccessControlListAdd ActionId="{{ action_id }}" Resource="{{ resource }}"
+                        {% if whitelist %} List="whitelist" {% elif blacklist %} List="blacklist" {% endif %}
+                        {% if full_result is defined %} FullResult="{{ full_result | int }}" {% endif %}>
+    {% for access_control in access_controls %}
+      <AccessControlListEntry {% if access_control.domain_name %} DomainName="{{ access_control.domain_name }}" {% endif %}
+                              {% if access_control.registrar_id %} RegistrarId="{{ access_control.registrar_id }}" {% endif %}
+                              {% if access_control.ip_address %} Address="{{ access_control.ip_address }}" {% endif %}
+                              {% if access_control.comment %} Comment="{{ access_control.comment }}" {% endif %}/>
+    {% endfor %}
+    {% if audit_text %} <AuditText>{{ audit_text }}</AuditText> {% endif %}
+  </AccessControlListAdd>
+</NZSRSRequest>

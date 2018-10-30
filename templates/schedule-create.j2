@@ -1,0 +1,10 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}">
+  <ScheduleCreate ActionId="{{ action_id }}" ProcessName="{{ process_name }}" Frequency="{{ frequency }}"
+                  {% if parameters %} Parameters="{{ parameters }}" {% endif %}>
+    <FirstRunDate Year="{{ first_run.year }}" Month="{{ first_run.month }}" Day="{{ first_run.day }}" Hour="{{ first_run.hour }}" Minute="{{ first_run.minute }}" Second="{{ first_run.second }}" {% if first_run.time_zone %} TimeZoneOffset="{{ first_run.time_zone }}" {% endif %}/>
+    {% if final_run %}
+      <FinalRunDate Year="{{ final_run.year }}" Month="{{ final_run.month }}" Day="{{ final_run.day }}" Hour="{{ final_run.hour }}" Minute="{{ final_run.minute }}" Second="{{ final_run.second }}" {% if final_run.time_zone %} TimeZoneOffset="{{ final_run.time_zone }}" {% endif %}/>
+    {% endif %}
+    {% if audit_text %} <AuditText>{{ audit_text }}</AuditText> {% endif %}
+  </ScheduleCreate>
+</NZSRSRequest>

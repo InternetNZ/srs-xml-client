@@ -1,0 +1,23 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}" {% if target_registrar_id %} RegistrarId="{{ target_registrar_id }}" {% endif %}>
+  <GetMessages {% if action_id %} ActionId="{{ action_id }}" {% endif %}
+               {% if originating_registrar_id %} OriginatingRegistrarId="{{ originating_registrar_id }}" {% elif others %} OriginatingRegistrarId="OTHERS" {% endif %}
+               {% if recipient_registrar_id %} RecipientRegistrarId="{{ recipient_registrar_id }}" {% endif %}
+               {% if max_results is defined %} MaxResults="{{ max_results }}" {% endif %}
+               {% if skip_results is defined %} SkipResults="{{ skip_results }}" {% endif %}
+               {% if count_results %} CountResults="{{ count_results | int }}" {% endif %}
+               {% if queue_mode %} QueueMode="{{ queue_mode | int }}" {% endif %}>
+    {% if transaction_from or transaction_to %}
+      <TransDateRange>
+        {% if transaction_from %}
+          <From Year="{{ transaction_from.year }}" Month="{{ transaction_from.month }}" Day="{{ transaction_from.day }}" Hour="{{ transaction_from.hour }}" Minute="{{ transaction_from.minute }}" Second="{{ transaction_from.second }}" {% if transaction_from.time_zone %} TimeZoneOffset="{{ transaction_from.time_zone }}" {% endif %}/>
+        {% endif %}
+        {% if transaction_to %}
+          <To Year="{{ transaction_to.year }}" Month="{{ transaction_to.month }}" Day="{{ transaction_to.day }}" Hour="{{ transaction_to.hour }}" Minute="{{ transaction_to.minute }}" Second="{{ transaction_to.second }}" {% if transaction_to.time_zone %} TimeZoneOffset="{{ transaction_to.time_zone }}" {% endif %}/>
+        {% endif %}
+      </TransDateRange>
+    {% endif %}
+    {% if third_party %} <TypeFilter Type="third-party" /> {% endif %}
+    {% if server_generated %} <TypeFilter Type="server-generated-data" /> {% endif %}
+    {% if audit_text %} <AuditTextFilter>{{ audit_text }}</AuditTextFilter> {% endif %}
+  </GetMessages>
+</NZSRSRequest>

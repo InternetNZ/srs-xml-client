@@ -1,0 +1,157 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}" {% if target_registrar_id %} RegistrarId="{{ target_registrar_id }}" {% endif %}>
+  <DomainDetailsQry {% if active %} Status="Active" {% elif pending %} Status="PendingRelease" {% endif %}
+                    {% if term is defined %} Term="{{ term }}" {% endif %}
+                    {% if delegate %} Delegate="{{ delegate | int }}" {% endif %}
+                    {% if registrant_ref %} RegistrantRef="{{ registrant_ref }}" {% endif %}
+                    {% if max_results is defined %} MaxResults="{{ max_results }}" {% endif %}
+                    {% if skip_results is defined %} SkipResults="{{ skip_results }}" {% endif %}
+                    {% if count_results %} CountResults="{{ count_results | int }}" {% endif %}
+                    {% if show_history %} ShowHistory="{{ show_history | int }}" {% endif %}>
+    {% for domain_name in domain_names %}
+      <DomainNameFilter>{{ domain_name }}</DomainNameFilter>
+    {% endfor %}
+    {% if name_servers %}
+      <NameServerFilter>
+        {% for name_server in name_servers %}
+          <ServerFilter {% if name_server.hostname %} FQDN="{{ name_server.hostname }}" {% endif %}
+                        {% if name_server.ip4_address %} IP4Address="{{ name_server.ip4_address }}" {% endif %}
+                        {% if name_server.ip6_address %} IP6Address="{{ name_server.ip6_address }}" {% endif %}/>
+        {% endfor %}
+      </NameServerFilter>
+    {% endif %}
+    {% if dnssec_keys %}
+      <DNSSECFilter>
+        {% for dnssec_key in dnssec_keys %}
+          <DSFilter {% if dnssec_key.key_tag %} KeyTag="{{ dnssec_key.key_tag }}" {% endif %}
+                    {% if dnssec_key.algorithm %} Algorithm="{{ dnssec_key.algorithm }}" {% endif %}
+                    {% if dnssec_key.digest_type %} DigestType="{{ dnssec_key.digest_type }}" {% endif %}>
+            {% if dnssec_key.digest %} <Digest>{{ dnssec_key.digest }}</Digest> {% endif %}
+          </DSFilter>
+        {% endfor %}
+      </DNSSECFilter>
+    {% endif %}
+    {% if registrant %}
+      <RegistrantContactFilter {% if registrant.name %} Name="{{ registrant.name }}" {% endif %}
+                               {% if registrant.email_address %} Email="{{ registrant.email_address }}" {% endif %}
+                               {% if registrant.privacy is defined %} Privacy="{{ registrant.privacy | int }}" {% endif %}>
+        {% if registrant.postal_address1 or registrant.postal_address2 or registrant.postal_city or registrant.postal_province or registrant.postal_country or registrant.postal_code %}
+          <PostalAddressFilter {% if registrant.postal_address1 %} Address1="{{ registrant.postal_address1 }}" {% endif %}
+                               {% if registrant.postal_address2 %} Address2="{{ registrant.postal_address2 }}" {% endif %}
+                               {% if registrant.postal_city %} City="{{ registrant.postal_city }}" {% endif %}
+                               {% if registrant.postal_province %} Province="{{ registrant.postal_province }}" {% endif %}
+                               {% if registrant.postal_country %} CountryCode="{{ registrant.postal_country }}" {% endif %}
+                               {% if registrant.postal_code %} PostCode="{{ registrant.postal_code }}" {% endif %}/>
+        {% endif %}
+        {% if registrant.phone %}
+          <Phone CountryCode="{{ registrant.phone.country_code }}" AreaCode="{{ registrant.phone.area_code }}" LocalNumber="{{ registrant.phone.local_number }}" />
+        {% endif %}
+        {% if registrant.fax %}
+          <Fax CountryCode="{{ registrant.fax.country_code }}" AreaCode="{{ registrant.fax.area_code }}" LocalNumber="{{ registrant.fax.local_number }}" />
+        {% endif %}
+      </RegistrantContactFilter>
+    {% endif %}
+    {% if admin %}
+      <AdminContactFilter {% if admin.name %} Name="{{ admin.name }}" {% endif %}
+                          {% if admin.email_address %} Email="{{ admin.email_address }}" {% endif %}
+                          {% if admin.privacy is defined %} Privacy="{{ admin.privacy | int }}" {% endif %}>
+        {% if admin.postal_address1 or admin.postal_address2 or admin.postal_city or admin.postal_province or admin.postal_country or admin.postal_code %}
+          <PostalAddressFilter {% if admin.postal_address1 %} Address1="{{ admin.postal_address1 }}" {% endif %}
+                               {% if admin.postal_address2 %} Address2="{{ admin.postal_address2 }}" {% endif %}
+                               {% if admin.postal_city %} City="{{ admin.postal_city }}" {% endif %}
+                               {% if admin.postal_province %} Province="{{ admin.postal_province }}" {% endif %}
+                               {% if admin.postal_country %} CountryCode="{{ admin.postal_country }}" {% endif %}
+                               {% if admin.postal_code %} PostCode="{{ admin.postal_code }}" {% endif %}/>
+        {% endif %}
+        {% if admin.phone %}
+          <Phone CountryCode="{{ admin.phone.country_code }}" AreaCode="{{ admin.phone.area_code }}" LocalNumber="{{ admin.phone.local_number }}" />
+        {% endif %}
+        {% if admin.fax %}
+          <Fax CountryCode="{{ admin.fax.country_code }}" AreaCode="{{ admin.fax.area_code }}" LocalNumber="{{ admin.fax.local_number }}" />
+        {% endif %}
+      </AdminContactFilter>
+    {% endif %}
+    {% if technical %}
+      <TechnicalContactFilter {% if technical.name %} Name="{{ technical.name }}" {% endif %}
+                              {% if technical.email_address %} Email="{{ technical.email_address }}" {% endif %}
+                              {% if technical.privacy is defined %} Privacy="{{ technical.privacy | int }}" {% endif %}>
+        {% if technical.postal_address1 or technical.postal_address2 or technical.postal_city or technical.postal_province or technical.postal_country or technical.postal_code %}
+          <PostalAddressFilter {% if technical.postal_address1 %} Address1="{{ technical.postal_address1 }}" {% endif %}
+                               {% if technical.postal_address2 %} Address2="{{ technical.postal_address2 }}" {% endif %}
+                               {% if technical.postal_city %} City="{{ technical.postal_city }}" {% endif %}
+                               {% if technical.postal_province %} Province="{{ technical.postal_province }}" {% endif %}
+                               {% if technical.postal_country %} CountryCode="{{ technical.postal_country }}" {% endif %}
+                               {% if technical.postal_code %} PostCode="{{ technical.postal_code }}" {% endif %}/>
+        {% endif %}
+        {% if technical.phone %}
+           <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
+        {% endif %}
+        {% if technical.fax %}
+          <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}" />
+        {% endif %}
+      </TechnicalContactFilter>
+    {% endif %}
+    {% if registered_from or registered_to %}
+      <RegisteredDateRange>
+        {% if registered_from %}
+          <From Year="{{ registered_from.year }}" Month="{{ registered_from.month }}" Day="{{ registered_from.day }}" Hour="{{ registered_from.hour }}" Minute="{{ registered_from.minute }}" Second="{{ registered_from.second }}" {% if registered_from.time_zone %} TimeZoneOffset="{{ registered_from.time_zone }}" {% endif %}/>
+        {% endif %}
+        {% if registered_to %}
+          <To Year="{{ registered_to.year }}" Month="{{ registered_to.month }}" Day="{{ registered_to.day }}" Hour="{{ registered_to.hour }}" Minute="{{ registered_to.minute }}" Second="{{ registered_to.second }}" {% if registered_to.time_zone %} TimeZoneOffset="{{ registered_to.time_zone }}" {% endif %}/>
+        {% endif %}
+      </RegisteredDateRange>
+    {% endif %}
+    {% if billed_from or billed_to %}
+      <BilledUntilDateRange>
+        {% if billed_from %}
+          <From Year="{{ billed_from.year }}" Month="{{ billed_from.month }}" Day="{{ billed_from.day }}" Hour="{{ billed_from.hour }}" Minute="{{ billed_from.minute }}" Second="{{ billed_from.second }}" {% if billed_from.time_zone %} TimeZoneOffset="{{ billed_from.time_zone }}" {% endif %}/>
+        {% endif %}
+        {% if billed_to %}
+          <To Year="{{ billed_to.year }}" Month="{{ billed_to.month }}" Day="{{ billed_to.day }}" Hour="{{ billed_to.hour }}" Minute="{{ billed_to.minute }}" Second="{{ billed_to.second }}" {% if billed_to.time_zone %} TimeZoneOffset="{{ billed_to.time_zone }}" {% endif %}/>
+        {% endif %}
+      </BilledUntilDateRange>
+    {% endif %}
+    {% if cancelled_from or cancelled_to %}
+      <CancelledDateRange>
+        {% if cancelled_from %}
+          <From Year="{{ cancelled_from.year }}" Month="{{ cancelled_from.month }}" Day="{{ cancelled_from.day }}" Hour="{{ cancelled_from.hour }}" Minute="{{ cancelled_from.minute }}" Second="{{ cancelled_from.second }}" {% if cancelled_from.time_zone %} TimeZoneOffset="{{ cancelled_from.time_zone }}" {% endif %}/>
+        {% endif %}
+        {% if cancelled_to %}
+          <To Year="{{ cancelled_to.year }}" Month="{{ cancelled_to.month }}" Day="{{ cancelled_to.day }}" Hour="{{ cancelled_to.hour }}" Minute="{{ cancelled_to.minute }}" Second="{{ cancelled_to.second }}" {% if cancelled_to.time_zone %} TimeZoneOffset="{{ cancelled_to.time_zone }}" {% endif %}/>
+        {% endif %}
+      </CancelledDateRange>
+    {% endif %}
+    {% if locked_from or locked_to %}
+      <LockedDateRange>
+        {% if locked_from %}
+          <From Year="{{ locked_from.year }}" Month="{{ locked_from.month }}" Day="{{ locked_from.day }}" Hour="{{ locked_from.hour }}" Minute="{{ locked_from.minute }}" Second="{{ locked_from.second }}" {% if locked_from.time_zone %} TimeZoneOffset="{{ locked_from.time_zone }}" {% endif %}/>
+        {% endif %}
+        {% if locked_to %}
+          <To Year="{{ locked_to.year }}" Month="{{ locked_to.month }}" Day="{{ locked_to.day }}" Hour="{{ locked_to.hour }}" Minute="{{ locked_to.minute }}" Second="{{ locked_to.second }}" {% if locked_to.time_zone %} TimeZoneOffset="{{ locked_to.time_zone }}" {% endif %}/>
+        {% endif %}
+      </LockedDateRange>
+    {% endif %}
+    {% if action_id %} <ActionIdFilter>{{ action_id }}</ActionIdFilter> {% endif %}
+    {% if fields %}
+      <FieldList {% if fields.registrar_id %} RegistrarId="{{ fields.registrar_id | int }}" {% endif %}
+                 {% if fields.registrar_name %} RegistrarName="{{ fields.registrar_name | int }}" {% endif %}
+                 {% if fields.originating_registrar_id %} ChangedByRegistrarId="{{ fields.originating_registrar_id | int }}" {% endif %}
+                 {% if fields.action_id %} LastActionId="{{ fields.action_id | int }}" {% endif %}
+                 {% if fields.status %} Status="{{ fields.status | int }}" {% endif %}
+                 {% if fields.term %} Term="{{ fields.term | int }}" {% endif %}
+                 {% if fields.delegate %} Delegate="{{ fields.delegate | int }}" {% endif %}
+                 {% if fields.registrant_ref %} RegistrantRef="{{ fields.registrant_ref | int }}" {% endif %}
+                 {% if fields.registrant %} RegistrantContact="{{ fields.registrant | int }}" {% endif %}
+                 {% if fields.admin %} AdminContact="{{ fields.admin | int }}" {% endif %}
+                 {% if fields.technical %} TechnicalContact="{{ fields.technical | int }}" {% endif %}
+                 {% if fields.default_contacts %} DefaultContacts="{{ fields.default_contacts | int }}" {% endif %}
+                 {% if fields.registered %} RegisteredDate="{{ fields.registered | int }}" {% endif %}
+                 {% if fields.billed_until %} BilledUntil="{{ fields.billed_until | int }}" {% endif %}
+                 {% if fields.cancelled %} CancelledDate="{{ fields.cancelled | int }}" {% endif %}
+                 {% if fields.effective_from %} EffectiveFrom="{{ fields.effective_from | int }}" {% endif %}
+                 {% if fields.locked %} LockedDate="{{ fields.locked | int }}" {% endif %}
+                 {% if fields.name_servers %} NameServers="{{ fields.name_servers | int }}" {% endif %}
+                 {% if fields.dnssec_keys %} DNSSEC="{{ fields.dnssec_keys | int }}" {% endif %}
+                 {% if fields.audit_text %} AuditText="{{ fields.audit_text | int }}" {% endif %}/>
+    {% endif %}
+  </DomainDetailsQry>
+</NZSRSRequest>

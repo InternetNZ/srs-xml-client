@@ -1,0 +1,854 @@
+#!/usr/bin/python3
+#
+# Copyright 2018 InternetNZ Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the copyright holder nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import sys
+import os
+import re
+import tempfile
+import subprocess
+import uuid
+import jinja2
+from lxml import etree
+import requests
+from urllib.parse import parse_qsl
+
+
+PARENT_DIR = os.path.dirname(sys.argv[0])
+
+REGISTRY_KEY_ID = 'registry/pgp-keyid.txt'
+REGISTRY_CERTIFICATE = 'registry/srs-root-ca.pem'
+
+VERSION_MAJOR = '7'
+VERSION_MINOR = '16'
+
+
+class GetOptions():
+    def __init__(self, arguments, program = None):
+        self.last_option = program or 'first'
+        self.arguments = arguments
+
+    def option(self, allowed = None):
+        if not len(self.arguments):
+            return None
+
+        option = self.arguments[0]
+
+        if option[0:2] != '--':
+            raise Exception('Non-option \'{}\' found'.format(option))
+
+        option = option[2:]
+
+        if allowed is not None and option not in allowed:
+            return None
+
+        self.arguments.pop(0)
+        self.last_option = option
+
+        return option
+
+    def argument(self, required, pattern = None):
+        if len(self.arguments):
+            argument = self.arguments[0]
+        else:
+            argument = None
+
+        if argument is None or not len(argument) or argument[0:2] == '--':
+            if required:
+                raise Exception('Option --{} requires an argument'.format(self.last_option))
+
+            return None
+
+        if pattern and not re.search(pattern, argument):
+            raise Exception('Invalid --{} argument: {}'.format(self.last_option, argument))
+
+        self.arguments.pop(0)
+        
+        return argument
+
+
+def parse_arguments():
+    arguments = {'version_major': VERSION_MAJOR, 'version_minor': VERSION_MINOR}
+
+    getopt = GetOptions(sys.argv[1:], program = os.path.basename(sys.argv[0]))
+    action = getopt.argument(False)
+
+    if action not in ('domain-create', 'domain-update', 'domain-details-query', 'handle-create', 'handle-update', 'handle-details-query', 'whois', 'udai-valid-query', 'action-details-query', 'get-messages', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'registrar-account-query', 'registrar-details-query', 'access-control-list-add', 'access-control-list-remove', 'access-control-list-query', 'billing-amount-query', 'billing-amount-update', 'adjust-registrar-account', 'billed-until-adjustment', 'deferred-income-summary-query', 'deferred-income-detail-query', 'sys-params-create', 'sys-params-update', 'sys-params-query', 'schedule-create', 'schedule-update', 'schedule-cancel', 'schedule-query', 'run-log-create', 'run-log-query', 'send-xml', 'help', 'version'):
+        raise Exception('Invalid action, run \'{} help\' to see list of available actions'.format(sys.argv[0]))
+
+    if action in ('help', 'version'):
+        if action == 'help':
+            argument = getopt.argument(False)
+
+            if argument is not None:
+                action = re.sub(r'-', '_', argument)
+
+        return 'help', {action: True}
+
+    while True:
+        option = getopt.option()
+
+        if option is None:
+            break
+
+        # global
+        if option == 'url':
+            arguments['registry_url'] = getopt.argument(True)
+        elif option == 'gpg':
+            arguments['gpg_home'] = getopt.argument(True)
+        elif option == 'key':
+            arguments['gpg_key'] = getopt.argument(True, r'(?ix) ^ [0-9a-f]+ $').upper()
+        elif option == 'dry-run':
+            arguments['dry_run'] = True
+        elif option == 'timeout':
+            arguments['timeout'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+        elif option == 'version':
+            arguments['version_major'], arguments['version_minor'] = getopt.argument(True, '(?x) ^ [0-9]+ \. [0-9]+ $').split('.')
+
+        # ids
+        elif option in ('registrar-id', 'originating-registrar-id', 'recipient-registrar-id', 'target-registrar-id', 'invoice-id'):
+            id = re.sub(r'-', '_', option)
+            arguments[id] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+        elif option in ('transaction-id', 'action-id'):
+            id = re.sub(r'-', '_', option)
+            arguments[id] = getopt.argument(True)
+
+        # domain
+        elif option == 'domain':
+            arguments['domain_names'] = []
+            required = True
+
+            while True:
+                argument = getopt.argument(required, r'(?ix) ^ [a-z0-9āēīōū\.\-\*\?]+ $')
+
+                if argument is None:
+                    break
+
+                # idna
+                match = re.search(r'(?ix) ^ (?P<label1> [a-z0-9\-\*\?]* [āēīōū]+ [a-z0-9\-\?\*]*) (?P<label2> (?: \. [a-z0-9\-\*\?]+)*) $', argument)
+
+                if match is not None:
+                    arguments['domain_name_unicode'] = argument
+                    arguments['domain_name'] = 'xn--' + str(match.group('label1').encode('punycode'), 'ascii') + match.group('label2')
+                else:
+                    if 'domain_name_unicode' in arguments:
+                        del arguments['domain_name_unicode']
+
+                    arguments['domain_name'] = argument
+
+                arguments['domain_names'].append(arguments['domain_name'])
+                required = False
+
+        elif option == 'udai':
+            arguments['udai'] = getopt.argument(True)
+        elif option == 'term':
+            arguments['term'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+        elif option == 'ref':
+            arguments['registrant_ref'] = getopt.argument(True)
+        elif option == 'no-ref':
+            arguments['no_registrant_ref'] = True
+        elif option in ('delegate', 'undelegate'):
+            arguments['delegate'] = not option.startswith('un')
+        elif option in ('cancel', 'uncancel'):
+            arguments['cancel'] = not option.startswith('un')
+        elif option in ('lock', 'unlock'):
+            arguments['lock'] = not option.startswith('un')
+        elif option == 'renew':
+            arguments['renew'] = True
+        elif option == 'release':
+            arguments['release'] = True
+        elif option == 'new-udai':
+            arguments['new_udai'] = True
+        elif option == 'no-auto-renew':
+            arguments['no_auto_renew'] = True
+        elif option in ('mask', 'unmask'):
+            arguments['disclosure_mask'] = not option.startswith('un')
+        elif option == 'convert-contacts':
+            arguments['convert_contacts'] = True
+
+        # status
+        elif option in ('active', 'pending', 'confirmed'):
+            status = option
+            arguments[status] = True
+
+        # search query
+        elif option == 'history':
+            arguments['show_history'] = True
+        elif option == 'queue':
+            arguments['queue_mode'] = True
+        elif option in ('others', 'third-party', 'server-generated'):
+            filter = re.sub(r'-', '_', option)
+            arguments[filter] = True
+
+        elif option == 'fields':
+            arguments['fields'] = {}
+
+            while True:
+                argument = getopt.argument(False)
+
+                if not argument:
+                    break
+
+                if argument == 'registrar':
+                    arguments['fields']['registrar_name'] = True
+                elif argument in ('registrar-id', 'originating-registrar-id', 'action-id', 'term', 'status', 'delegate', 'registrant', 'admin', 'technical', 'registered', 'billed-until', 'cancelled', 'effective-from', 'locked', 'default-contacts'):
+                    field = re.sub(r'-', '_', argument)
+                    arguments['fields'][field] = True
+                elif argument == 'ref':
+                    arguments['fields']['registrant_ref'] = True
+                elif argument == 'nameservers':
+                    arguments['fields']['name_servers'] = True
+                elif argument == 'dnssec':
+                    arguments['fields']['dnssec_keys'] = True
+                elif argument == 'audit':
+                    arguments['fields']['audit_text'] = True
+                else:
+                    raise Exception('Unknown domain --fields: {}'.format(argument))
+                
+        # search results
+        elif option in ('full', 'brief'):
+            arguments['full_result'] = option.startswith('full')
+        elif option in ('max', 'skip'):
+            results = option + '_results'
+            arguments[results] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+        elif option == 'count':
+            arguments['count_results'] = True
+
+        # contacts
+        elif option in ('registrant', 'admin', 'technical', 'public', 'private', 'handle'):
+            contact = option
+            arguments[contact] = {}
+
+            while True:
+                option = getopt.option(('handle-id', 'name', 'email', 'privacy', 'no-privacy', 'address1', 'address2', 'no-address2', 'city', 'province', 'no-province', 'country', 'postcode', 'no-postcode', 'phone', 'fax', 'no-fax'))
+
+                if option is None:
+                    break
+
+                if option == 'handle-id':
+                    arguments[contact]['handle_id'] = getopt.argument(True, r'(?ix) ^ [a-z0-9_\-]{3,16} $')
+                elif option == 'name':
+                    arguments[contact]['name'] = getopt.argument(True)
+                elif option == 'email':
+                    arguments[contact]['email_address'] = getopt.argument(True, r'(?ix) ^ [a-z0-9\.\-\+]+ @ (?: [a-z0-9\-]+ \.)+  [a-z]+ $')
+                elif option in ('privacy', 'no-privacy'):
+                    arguments[contact]['privacy'] = not option.startswith('no')
+                elif option in ('address1', 'address2', 'city', 'province'):
+                    postal = 'postal_' + option
+                    arguments[contact][postal] = getopt.argument(True)
+                elif option == 'country':
+                    arguments[contact]['postal_country'] = getopt.argument(True, r'(?ix) ^ [a-z]{2} $').upper()
+                elif option == 'postcode':
+                    arguments[contact]['postal_code'] = getopt.argument(True)
+                elif option in ('phone', 'fax'):
+                    number = option
+                    arguments[contact][number] = {}
+                    
+                    argument = getopt.argument(True)
+                    match = re.search(r'(?ix) ^ \+? (?P<country_code> [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9]+) $', argument)
+
+                    if match is None:
+                        raise Exception('Invalid --{} number: {}'.format(option, argument))
+
+                    arguments[contact][number]['country_code'] = match.group('country_code')
+                    arguments[contact][number]['area_code'] = match.group('area_code') or ''
+                    arguments[contact][number]['local_number'] = match.group('local_number')
+                elif option in ('no-address2', 'no-province'):
+                    postal = 'no_postal_' + option[3:]
+                    arguments[contact][postal] = True
+                elif option == 'no-postcode':
+                    arguments[contact]['no_postal_code'] = True
+                elif option == 'no-fax':
+                    arguments[contact]['no_fax'] = True
+
+        elif option in ('no-admin', 'no-technical'):
+            contact = re.sub(r'-', '_', option)
+            arguments[contact] = True
+        elif option == 'delete':
+            arguments['delete'] = True
+
+        # name servers
+        elif option == 'nameserver':
+            if 'name_servers' not in arguments:
+                arguments['name_servers'] = []
+
+            suboptions = False
+
+            while True:
+                option = getopt.option(('name', 'ip4', 'ip6'))
+
+                if option is None:
+                    break
+
+                if not suboptions:
+                    arguments['name_servers'].append({})
+                    suboptions = True
+                
+                # we should probably use the ipaddress module instead of a regexp for ip addresses
+                if option == 'name':
+                    arguments['name_servers'][-1]['hostname'] = getopt.argument(True, r'(?ix) ^ [a-z0-9\.\-\*\?]+ $')
+                elif option == 'ip4':
+                    arguments['name_servers'][-1]['ip4_address'] = getopt.argument(True, r'(?x) ^ [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ $')
+                elif option == 'ip6':
+                    arguments['name_servers'][-1]['ip6_address'] = getopt.argument(True, r'(?ix) ^ (?: [a-f0-9]{1,4} :){1,7} [a-f0-9]{1,4} $')
+
+        elif option == 'no-nameservers':
+            arguments['no_name_servers'] = True
+
+        # dnssec
+        elif option == 'dnssec':
+            if 'dnssec_keys' not in arguments:
+                arguments['dnssec_keys'] = []
+
+            suboptions = False
+
+            while True:
+                option = getopt.option(('digest', 'tag', 'algorithm', 'type'))
+
+                if option is None:
+                    break
+
+                if not suboptions:
+                    arguments['dnssec_keys'].append({})
+                    suboptions = True
+
+                if option == 'digest':
+                    arguments['dnssec_keys'][-1]['digest'] = getopt.argument(True, r'(?ix) ^ [a-f0-9]+ $').upper()
+                elif option == 'tag':
+                    arguments['dnssec_keys'][-1]['key_tag'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+                elif option == 'algorithm':
+                    arguments['dnssec_keys'][-1]['algorithm'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+                elif option == 'type':
+                    arguments['dnssec_keys'][-1]['digest_type'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+
+        elif option == 'no-dnssec':
+            arguments['no_dnssec_keys'] = True
+
+        # dates
+        elif option in ('transaction-from', 'transaction-to', 'registered-from', 'registered-to', 'billed-until', 'billed-from', 'billed-to', 'cancelled-from', 'cancelled-to', 'results-from', 'results-to', 'search-from', 'search-to', 'changed-from', 'changed-to', 'invoice-from', 'invoice-to', 'first-run', 'last-run', 'final-run', 'active-on', 'logged', 'logged-from', 'logged-to', 'effective', 'transaction', 'period-start', 'period-end'):
+            date = re.sub(r'-', '_', option)
+            argument = getopt.argument(True)
+        
+            match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
+
+            if match is None:
+                raise Exception('Invalid --{} date: {}'.format(option, argument))
+
+            arguments[date] = {}
+            
+            arguments[date]['day'] = int(match.group('day'))
+            arguments[date]['month'] = int(match.group('month'))
+            arguments[date]['year'] = int(match.group('year'))
+            
+            arguments[date]['hour'] = int(match.group('hour')) if match.group('hour') else 0
+            arguments[date]['minute'] = int(match.group('minute')) if match.group('minute') else 0
+            arguments[date]['second'] = int(match.group('second')) if match.group('second') else 0
+
+            arguments[date]['time_zone'] = match.group('time_zone')
+
+        # registrar
+        elif option == 'registrar':
+            arguments['registrar_name'] = getopt.argument(True)
+        elif option == 'website':
+            arguments['website'] = getopt.argument(True)
+        elif option == 'accref':
+            arguments['account_ref'] = getopt.argument(True)
+        elif option == 'password':
+            arguments['password'] = getopt.argument(True)
+        elif option == 'no-password':
+            arguments['no_password'] = True
+
+        # roles
+        elif option == 'roles':
+            arguments['roles'] = {}
+
+            while True:
+                argument = getopt.argument(False)
+
+                if argument is None:
+                    break
+
+                if argument in ('connect', 'registry', 'registrar', 'whois', 'create-domain', 'update-domain', 'update-disclosure', 'transfer-domain', 'update-registrar', 'administer', 'supervisor', 'query-domain', 'query-all-domains', 'query-acl', 'query-reg-acl', 'update-acl'):
+                    role = re.sub(r'-', '_', argument)
+                    arguments['roles'][role] = True
+                else:
+                    raise Exception('Unknown registrar --roles: {}'.format(argument))
+                
+        elif option == 'no-roles':
+            arguments['no_roles'] = True
+               
+        # allowed 2lds
+        elif option == '2lds':
+            arguments['allowed_2lds'] = []
+            required = True
+
+            while True:
+                argument = getopt.argument(required, r'(?ix) ^ [a-z]+ \. [a-z]+ $')
+
+                if argument is None:
+                    break
+
+                arguments['allowed_2lds'].append(argument)
+                required = False
+
+        elif option == 'no-2lds':
+            arguments['no_allowed_2lds'] = True
+
+        # pgp keys
+        elif option == 'pgp':
+            arguments['pgp_keys'] = []
+            required = True
+            
+            while True:
+                argument = getopt.argument(required)
+
+                if argument is None:
+                    break
+
+                with open(argument, 'r') as file:
+                    arguments['pgp_keys'].append(file.read())
+
+                required = False
+
+        elif option == 'no-pgp':
+            arguments['no_pgp_keys'] = True
+
+        # system parameters
+        elif option == 'name':
+            arguments['name'] = getopt.argument(True)
+        elif option == 'value':
+            arguments['value'] = getopt.argument(True)
+
+        # billing
+        elif option == 'amount':
+            arguments['amount'] = getopt.argument(True)
+        elif option in ('base-month', 'base-year', 'income-month', 'income-year'):
+            date = re.sub(r'-', '_', option)
+            arguments[date] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+        elif option == 'months':
+            arguments['months'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+        elif option in ('credit', 'debit'):
+            adjustment = option
+            arguments[adjustment] = True
+
+        # acl types
+        elif option == 'resource':
+            arguments['resource'] = getopt.argument(True)
+        elif option in ('whitelist', 'blacklist'):
+            list = option
+            arguments[list] = True
+        elif option == 'type':
+            arguments['types'] = {}
+
+            while True:
+                argument = getopt.argument(False)
+
+                if argument is None:
+                    break
+
+                if argument == 'domain':
+                    arguments['types']['domain_name'] = True
+                elif argument == 'registrar-id':
+                    arguments['types']['registrar_id'] = True
+                elif argument == 'ip':
+                    arguments['types']['ip_address'] = True
+                else:
+                    raise Exception('Unknown access control --type: {}'.format(argument))
+
+        # acl entries
+        elif option == 'entry':
+            if 'access_controls' not in arguments:
+                arguments['access_controls'] = []
+
+            suboptions = False
+                
+            while True:
+                option = getopt.option(('domain', 'registrar-id', 'ip', 'comment'))
+
+                if option is None:
+                    break
+
+                if not suboptions:
+                    arguments['access_controls'].append({})
+                    suboptions = True
+
+                if option == 'domain':
+                    argument = getopt.argument(True, r'(?ix) ^ [a-z0-9āēīōū\-]+ (?: \. [a-z0-9\-]+)+ $')
+                    match = re.search(r'(?ix) ^ (?P<label1> [a-z0-9\-\*\?]* [āēīōū]+ [a-z0-9\-\?\*]*) (?P<label2> (?: \. [a-z0-9\-\*\?]+)*) $', argument)
+
+                    if match is not None:
+                        arguments['access_controls'][-1]['domain_name'] = 'xn--' + str(match.group('label1').encode('punycode'), 'ascii') + match.group('label2')
+                    else:
+                        arguments['access_controls'][-1]['domain_name'] = argument
+                elif option == 'registrar-id':
+                    arguments['access_controls'][-1]['registrar_id'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
+                elif option == 'ip':
+                    # we should probably use the ipaddress module instead of a regexp for ip addresses, also use separate ip4 and ip6 arguments
+                    arguments['access_controls'][-1]['ip_address'] = getopt.argument(True, r'(?ix) ^ (?: [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ | (?: [a-f0-9]{1,4} :){1,7} [a-f0-9]{1,4}) (?: / [0-9]+)? $')
+                elif option == 'comment':
+                    arguments['access_controls'][-1]['comment'] = getopt.argument(True)
+
+        # scheduled jobs
+        elif option == 'process':
+            arguments['process_name'] = getopt.argument(True)
+        elif option == 'frequency':
+            arguments['frequency'] = getopt.argument(True, r'(?ix) ^ [0-9]+ [ ] (?: minute | hour | day | month | year) s? $')
+        elif option == 'parameters':
+            arguments['parameters'] = getopt.argument(True)
+        elif option in ('success', 'failure'):
+            status = option
+            arguments[status] = True
+        elif option == 'control':
+            arguments['control'] = getopt.argument(True)
+        elif option == 'details':
+            arguments['details'] = getopt.argument(True)
+
+        # audit
+        elif option == 'audit':
+            arguments['audit_text'] = getopt.argument(True)
+        elif option == 'source-ip':
+            arguments['source_address'] = getopt.argument(True)
+
+        # raw input
+        elif option == 'file':
+            arguments['file'] = getopt.argument(True)
+
+        else:
+            raise Exception('Unknown option \'{}\' found'.format(option))
+
+    return action, arguments
+
+
+def check_arguments(action, arguments):
+    if 'registrar_id' not in arguments:
+        arguments['registrar_id'] = os.environ.get('REGISTRAR_ID')
+
+        if arguments['registrar_id'] is None:
+            raise Exception('No --registrar-id specified')
+
+    if 'dry_run' not in arguments and 'registry_url' not in arguments:
+        arguments['registry_url'] = os.environ.get('REGISTRY_URL')
+
+        if arguments['registry_url'] is None:
+            raise Exception('No --url specified')
+
+    if action in ('domain-create', 'domain-update', 'udai-valid-query', 'whois', 'adjust-registrar-account', 'billed-until-adjustment'):
+        if 'domain_name' not in arguments:
+            raise Exception('No --domain specified')
+
+    if action == 'domain-create':
+        if 'term' not in arguments:
+            raise Exception('No --term specified')
+
+        if 'registrant' not in arguments:
+            raise Exception('No --registrant specified')
+
+    if action in ('handle-create', 'handle-update'):
+        if 'handle' not in arguments:
+            raise Exception('No --handle contact specified')
+
+        if 'handle_id' not in arguments['handle']:
+            raise Exception('No --handle-id specified')
+
+    if action == 'udai-valid-query':
+        if 'udai' not in arguments:
+            raise Exception('No --udai specified')
+
+    if action == 'ack-message':
+        if 'transaction_id' not in arguments:
+            raise Exception('No --transaction-id specified')
+
+    if action == 'action-details-query':
+        if 'action_id' not in arguments:
+            raise Exception('No --action-id specified')
+
+    if action in ('registrar-create', 'billed-until-adjustment'):
+        if 'target_registrar_id' not in arguments:
+            raise Exception('No --target-registrar-id specified')
+
+    if action == 'registrar-create':
+        if 'registrar_name' not in arguments:
+            raise Exception('No --registrar specified')
+
+        if 'account_ref' not in arguments:
+            raise Exception('No --accref specified')
+
+        for contact in ('public', 'private', 'technical'):
+            if contact not in arguments:
+                raise Exception('No --{} specified'.format(contact))
+
+    if action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'registrar-create', 'registrar-update'):
+        for contact in ['registrant', 'admin', 'technical', 'handle', 'public', 'private']:
+            if contact not in arguments:
+                continue
+
+            # handle is being deleted, no further options are required
+            if action == 'handle-update' and 'delete' in arguments:
+                continue
+
+            if 'name' not in arguments[contact]:
+                raise Exception('No {} --name specified'.format(contact))
+
+            if 'email_address' not in arguments[contact]:
+                raise Exception('No {} --email specified'.format(contact))
+
+            # if any postal address is specified or this is a create action
+            if 'postal_address1' in arguments[contact] or 'postal_address2' in arguments[contact] or 'no_postal_address2' in arguments[contact] or 'postal_city' in arguments[contact] or 'postal_province' in arguments[contact] or 'no_postal_province' in arguments[contact] or 'postal_country' in arguments[contact] or 'postal_code' in arguments or 'no_postal_code' in arguments[contact] or action in ('domain-create', 'handle-create', 'registrar-create'):
+                if 'postal_address1' not in arguments[contact]:
+                    raise Exception('No {} --address1 specified'.format(contact))
+                
+                if 'postal_city' not in arguments[contact]:
+                    raise Exception('No {} --city specified'.format(contact))
+
+                if 'postal_country' not in arguments[contact]:
+                    raise Exception('No {} --country specified'.format(contact))
+
+            if 'phone' not in arguments[contact] and action in ('domain-create', 'handle-create', 'registrar-create'):
+                raise Exception('No ' + contact + ' --phone specified')
+
+    if action in ('domain-create', 'domain-update'):
+        if 'name_servers' in arguments:
+            for index in range(0, len(arguments['name_servers'])):
+                if 'hostname' not in arguments['name_servers'][index]:
+                    raise Exception('No nameserver {} --name specified'.format(index + 1))
+
+        if 'dnssec_keys' in arguments:
+            for index in range(0, len(arguments['dnssec_keys'])):
+                if 'digest' not in arguments['dnssec_keys'][index]:
+                    raise Exception('No dnssec {} --digest specified'.format(index + 1))
+
+                if 'key_tag' not in arguments['dnssec_keys'][index]:
+                    raise Exception('No dnssec {} --tag specified'.format(index + 1))
+
+                if 'algorithm' not in arguments['dnssec_keys'][index]:
+                    raise Exception('No dnssec {} --algorithm specified'.format(index + 1))
+
+                if 'digest_type' not in arguments['dnssec_keys'][index]:
+                    raise Exception('No dnssec {} --type specified'.format(index + 1))
+
+    if action == 'billed-until-adjustment':
+        if 'billed_until' not in arguments:
+            raise Exception('No --billed-until date specified')
+
+    if action == 'billing-amount-update':
+        if 'amount' not in arguments:
+            raise Exception('No --amount specified')
+
+    if action == 'adjust-registrar-account':
+        if 'target_registrar_id' not in arguments:
+            raise Exception('No --target-registrar-id specified')
+
+        if 'credit' not in arguments and 'debit' not in arguments:
+            raise Exception('No --credit or --debit specified')
+
+        if 'transaction' not in arguments or 'period_start' not in arguments or 'period_end' not in arguments:
+            raise Exception('No --transaction, --period-start or --period-end date specified')
+
+    if action in ('adjust-registrar-account', 'billed-until-adjustment'):
+        if 'audit_text' not in arguments:
+            raise Exception('No --audit specified')
+
+    if action in ('schedule-create', 'schedule-update', 'schedule-cancel', 'run-log-create'):
+        if 'process_name' not in arguments:
+            raise Exception('No --process specified')
+
+        if 'first_run' not in arguments:
+            raise Exception('No --first-run date specified')
+
+    if action == 'schedule-create':
+        if 'frequency' not in arguments:
+            raise Exception('No --frequency specified')
+
+    if action in ('access-control-list-add', 'access-control-list-remove'):
+        if 'resource' not in arguments:
+            raise Exception('No --resource specified')
+
+        if 'whitelist' not in arguments and 'blacklist' not in arguments:
+            raise Exception('No --whitelist or --blacklist specified')
+
+        if 'access_controls' not in arguments or not len(arguments['access_controls']):
+            raise Exception('No access control --entry specified')
+
+        for index in range(0, len(arguments['access_controls'])):
+            if 'domain_name' not in arguments['access_controls'][index] and 'registrar_id' not in arguments['access_controls'][index] and 'ip_address' not in arguments['access_controls'][index]:
+                raise Exception('No access control entry {} --domain, --registrar-id or --ip specified'.format(index + 1))
+
+    if action in ('deferred-income-summary-query', 'deferred-income-detail-query'):
+        if 'base_month' not in arguments or 'base_year' not in arguments:
+            raise Exception('No --base-month or --base-year specified')
+
+        if 'income_month' not in arguments or 'income_year' not in arguments:
+            raise Exception('No --income-month or --income-year specified')
+
+    if action == 'run-log-create':
+        if 'success' not in arguments and 'failure' not in arguments:
+            raise Exception('No --success or --failure specified')
+
+        if 'logged' not in arguments:
+            raise Exception('No --logged date specified')
+
+
+def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout):
+    temp_dir = tempfile.TemporaryDirectory(prefix = '/tmp/gpg-')
+
+    with open(temp_dir.name + '/plaintext', 'w') as file:
+        file.write(content)
+
+    arguments = ['/usr/bin/gpg', '--batch', '--armor']
+
+    if gpg_home:
+        arguments.extend(['--homedir', gpg_home])
+
+    if gpg_key:
+        arguments.extend(['--default-key', gpg_key])
+
+    arguments.extend(['--output', temp_dir.name + '/signature', '--detach-sign', temp_dir.name + '/plaintext'])
+
+    process = subprocess.Popen(arguments, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    output, errors = process.communicate(timeout = 10)
+
+    if process.returncode:
+        raise Exception('Signature detach-signing failed: {}'.format(str(errors, 'ascii')))
+
+    with open(temp_dir.name + '/signature', 'r') as file:
+        signature = file.read()
+
+    response = requests.post(registry_url, verify = PARENT_DIR + '/' + REGISTRY_CERTIFICATE, data = {'n': registrar_id, 'r': content, 's': signature}, timeout = timeout)
+    response.raise_for_status()
+
+    if response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
+        raise Exception('Unsupported content-type: {}'.format(response.headers['Content-Type']))
+
+    content = None
+    signature = None
+
+    for key, value in parse_qsl(response.text, strict_parsing = True, encoding = 'utf-8'):
+        if key == 'r':
+            content = value
+        elif key == 's':
+            signature = value
+
+    if not content:
+        raise Exception('No \'r\' parameter in response: {}'.format(response.text))
+
+    # some protocol errors don't have a signature
+    if signature:
+        with open(temp_dir.name + '/plaintext', 'w') as file:
+            file.write(content)
+
+        with open(temp_dir.name + '/signature', 'w') as file:
+            file.write(signature)
+            
+        arguments = ['/usr/bin/gpg', '--batch', '--armor']
+
+        if gpg_home:
+            arguments.extend(['--homedir', gpg_home])
+
+        arguments.extend(['--keyid-format', 'long', '--verify', temp_dir.name + '/signature', temp_dir.name + '/plaintext'])
+
+        process = subprocess.Popen(arguments, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        output, errors = process.communicate(timeout = 10)
+
+        if process.returncode:
+            raise Exception('Signature verification failed: {}'.format(str(errors, 'ascii')))
+
+        with open(PARENT_DIR + '/' + REGISTRY_KEY_ID, 'r') as file:
+            key_id = file.read().strip()
+
+        if not re.search('(?ix) using [ ] (?:RSA | DSA) [ ] key [ ] ' + key_id, str(errors, 'ascii')):
+            raise Exception('Incorrect key: {}'.format(str(errors, 'ascii')))
+
+    return bytes(content, 'utf-8')
+
+
+def main():
+    action, arguments = parse_arguments()
+
+    if action == 'help':
+        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True, trim_blocks = True, lstrip_blocks = True).get_template('client-help.j2')
+        content = template.render(arguments)
+
+        print(content, end = '')
+        return
+
+    check_arguments(action, arguments)
+
+    # lxml doesn't allow us to specifc this separately without creating a loader class
+    content = '<!DOCTYPE SRS SYSTEM "' + PARENT_DIR + '/registry/protocol.dtd">'
+
+    if action == 'send-xml':
+        if 'file' in arguments:
+            with open(arguments['file'], 'r') as file:
+                content += file.read()
+        else:
+            content += sys.stdin.read()
+
+    else:
+        # auto-generate a timed-based action uuid for write actions
+        if 'action_id' not in arguments and action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'sys-params-create', 'sys-params-update', 'access-control-list-add', 'access-control-list-remove', 'adjust-registrar-account', 'billed-until-adjustment', 'billing-amount-update', 'schedule-create', 'schedule-update', 'schedule-cancel', 'run-log-create'):
+            arguments['action_id'] = uuid.uuid1()
+
+        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True, trim_blocks = True, lstrip_blocks = True).get_template(action + '.j2')
+        content = template.render(arguments)
+
+    xml_document = etree.fromstring(content, etree.XMLParser(remove_blank_text = True, load_dtd = True))
+
+    if 'dry_run' in arguments:
+        print(str(etree.tostring(xml_document, pretty_print = True), 'utf-8'), end = '')
+        return
+
+    content = str(etree.tostring(xml_document, pretty_print = False), 'utf-8')
+
+    registrar_id = arguments['registrar_id']
+    registry_url = arguments['registry_url']
+
+    # gnupg will check the GNUPGHOME environment variable
+    gpg_home = arguments['gpg_home'] if 'gpg_home' in arguments else None
+
+    if 'gpg_key' in arguments:
+        gpg_key = arguments['gpg_key']
+    else:
+        gpg_key = os.environ.get('REGISTRAR_KEY')
+
+    timeout = arguments['timeout'] if 'timeout' in arguments else 300
+
+    content = send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout)
+    xml_document = etree.fromstring(content, etree.XMLParser(remove_blank_text = True))
+
+    print(str(etree.tostring(xml_document, pretty_print = True), 'utf-8'), end = '')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as error:
+        print(error, file = sys.stderr)
+        exit(1)
+
+    exit(0)

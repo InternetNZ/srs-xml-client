@@ -1,0 +1,6 @@
+<NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}">
+  <BilledUntilAdjustment ActionId="{{ action_id }}" DomainName="{{ domain_name }}">
+    <NewBilledUntilDate Year="{{ billed_until.year }}" Month="{{ billed_until.month }}" Day="{{ billed_until.day }}" Hour="{{ billed_until.hour }}" Minute="{{ billed_until.minute }}" Second="{{ billed_until.second }}" {% if billed_until.time_zone %} TimeZoneOffset="{{ billed_until.time_zone }}" {% endif %}/>
+    <AuditText>{{ audit_text }}</AuditText>
+  </BilledUntilAdjustment>
+</NZSRSRequest>
