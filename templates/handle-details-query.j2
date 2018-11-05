@@ -35,7 +35,7 @@
                                {% if handle.postal_city %} City="{{ handle.postal_city }}" {% endif %}
                                {% if handle.postal_province %} Province="{{ handle.postal_province }}" {% endif %}
                                {% if handle.postal_country %} CountryCode="{{ handle.postal_country }}" {% endif %}
-                               {% if handle.postal_code %} PostCode="{{ handle.postal_code }}" {% endif %}/>
+                               {% if handle.postal_code %} PostalCode="{{ handle.postal_code }}" {% endif %}/>
         {% endif %}
         {% if handle.phone %}
           <Phone CountryCode="{{ handle.phone.country_code }}" AreaCode="{{ handle.phone.area_code }}" LocalNumber="{{ handle.phone.local_number }}"/>

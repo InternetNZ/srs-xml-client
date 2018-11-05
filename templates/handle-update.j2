@@ -8,7 +8,7 @@
                      City="{{ handle.postal_city }}"
                      {% if handle.postal_province or handle.no_postal_province %} Province="{{ handle.postal_province }}" {% endif %}
                      CountryCode="{{ handle.postal_country }}"
-                     {% if handle.postal_code or handle.no_postal_code %} PostCode="{{ handle.postal_code }}" {% endif %}/>
+                     {% if handle.postal_code or handle.no_postal_code %} PostalCode="{{ handle.postal_code }}" {% endif %}/>
     {% endif %}
     {% if handle.phone %}
       <Phone CountryCode="{{ handle.phone.country_code }}" AreaCode="{{ handle.phone.area_code }}" LocalNumber="{{ handle.phone.local_number }}"/>
