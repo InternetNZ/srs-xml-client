@@ -40,7 +40,7 @@
                                {% if registrant.postal_city %} City="{{ registrant.postal_city }}" {% endif %}
                                {% if registrant.postal_province %} Province="{{ registrant.postal_province }}" {% endif %}
                                {% if registrant.postal_country %} CountryCode="{{ registrant.postal_country }}" {% endif %}
-                               {% if registrant.postal_code %} PostCode="{{ registrant.postal_code }}" {% endif %}/>
+                               {% if registrant.postal_code %} PostalCode="{{ registrant.postal_code }}" {% endif %}/>
         {% endif %}
         {% if registrant.phone %}
           <Phone CountryCode="{{ registrant.phone.country_code }}" AreaCode="{{ registrant.phone.area_code }}" LocalNumber="{{ registrant.phone.local_number }}" />
@@ -60,7 +60,7 @@
                                {% if admin.postal_city %} City="{{ admin.postal_city }}" {% endif %}
                                {% if admin.postal_province %} Province="{{ admin.postal_province }}" {% endif %}
                                {% if admin.postal_country %} CountryCode="{{ admin.postal_country }}" {% endif %}
-                               {% if admin.postal_code %} PostCode="{{ admin.postal_code }}" {% endif %}/>
+                               {% if admin.postal_code %} PostalCode="{{ admin.postal_code }}" {% endif %}/>
         {% endif %}
         {% if admin.phone %}
           <Phone CountryCode="{{ admin.phone.country_code }}" AreaCode="{{ admin.phone.area_code }}" LocalNumber="{{ admin.phone.local_number }}" />
@@ -80,7 +80,7 @@
                                {% if technical.postal_city %} City="{{ technical.postal_city }}" {% endif %}
                                {% if technical.postal_province %} Province="{{ technical.postal_province }}" {% endif %}
                                {% if technical.postal_country %} CountryCode="{{ technical.postal_country }}" {% endif %}
-                               {% if technical.postal_code %} PostCode="{{ technical.postal_code }}" {% endif %}/>
+                               {% if technical.postal_code %} PostalCode="{{ technical.postal_code }}" {% endif %}/>
         {% endif %}
         {% if technical.phone %}
           <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
