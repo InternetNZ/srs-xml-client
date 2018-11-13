@@ -16,7 +16,7 @@
     {% if handle.fax %}
       <Fax CountryCode="{{ handle.fax.country_code }}" AreaCode="{{ handle.fax.area_code }}" LocalNumber="{{ handle.fax.local_number }}"/>
     {% elif handle.no_fax %}
-       <Fax />
+      <Fax />
     {% endif %}
   </HandleUpdate>
 </NZSRSRequest>

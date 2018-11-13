@@ -252,7 +252,7 @@ def parse_arguments():
                     break
 
                 if option == 'handle-id':
-                    arguments[contact]['handle_id'] = getopt.argument(True, r'(?ix) ^ [a-z0-9_\-]{3,16} $')
+                    arguments[contact]['handle_id'] = getopt.argument(True, r'(?ix) ^ [a-z0-9_\-\*\?]{3,16} $')
                 elif option == 'name':
                     arguments[contact]['name'] = getopt.argument(True)
                 elif option == 'email':
@@ -394,7 +394,7 @@ def parse_arguments():
                 if argument is None:
                     break
 
-                if argument in ('connect', 'registry', 'registrar', 'whois', 'create-domain', 'update-domain', 'update-disclosure', 'transfer-domain', 'update-registrar', 'administer', 'supervisor', 'query-domain', 'query-all-domains', 'query-acl', 'query-reg-acl', 'update-acl'):
+                if argument in ('connect', 'registry', 'registrar', 'whois', 'create-domain', 'update-domain', 'cancel-domain', 'uncancel-domain', 'transfer-domain', 'query-domain', 'query-all-domains', 'update-disclosure', 'update-registrar', 'administer', 'supervisor', 'query-acl', 'query-reg-acl', 'update-acl'):
                     role = re.sub(r'-', '_', argument)
                     arguments['roles'][role] = True
                 else:
@@ -499,7 +499,8 @@ def parse_arguments():
                     suboptions = True
 
                 if option == 'domain':
-                    argument = getopt.argument(True, r'(?ix) ^ [a-z0-9āēīōū\-]+ (?: \. [a-z0-9\-]+)+ $')
+                    # domain is also used for epp acls so we only do IDN handling if it looks like a domain
+                    argument = getopt.argument(True)
                     match = re.search(r'(?ix) ^ (?P<label1> [a-z0-9\-\*\?]* [āēīōū]+ [a-z0-9\-\?\*]*) (?P<label2> (?: \. [a-z0-9\-\*\?]+)*) $', argument)
 
                     if match is not None:
@@ -612,6 +613,10 @@ def check_arguments(action, arguments):
             if action == 'handle-update' and 'delete' in arguments:
                 continue
 
+            # handle is being assigned, no further options are required
+            if action in ('domain-create', 'domain-update') and 'handle_id' in arguments[contact]:
+                continue
+
             if 'name' not in arguments[contact]:
                 raise Exception('No {} --name specified'.format(contact))
 
@@ -630,7 +635,7 @@ def check_arguments(action, arguments):
                     raise Exception('No {} --country specified'.format(contact))
 
             if 'phone' not in arguments[contact] and action in ('domain-create', 'handle-create', 'registrar-create'):
-                raise Exception('No ' + contact + ' --phone specified')
+                raise Exception('No {} --phone specified'.format(contact))
 
     if action in ('domain-create', 'domain-update'):
         if 'name_servers' in arguments:
@@ -739,7 +744,7 @@ def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout
     with open(temp_dir.name + '/signature', 'r') as file:
         signature = file.read()
 
-    response = requests.post(registry_url, verify = PARENT_DIR + '/' + REGISTRY_CERTIFICATE, data = {'n': registrar_id, 'r': content, 's': signature}, timeout = timeout)
+    response = requests.post(registry_url, verify = PARENT_DIR + '/' + REGISTRY_CERTIFICATE, headers = {'User-Agent': 'sxc/0.3'}, data = {'n': registrar_id, 'r': content, 's': signature}, timeout = timeout)
     response.raise_for_status()
 
     if response.headers['Content-Type'] != 'application/x-www-form-urlencoded':

@@ -59,7 +59,7 @@ Run 'sxc help ACTION' to see which options are available for that action. The op
 shown in the example command line are required.
 
 {% elif version %}
-sxc version 0.2
+sxc version 0.3
 
 Copyright 2018 Internet New Zealand Inc.
 
@@ -457,6 +457,8 @@ sxc registrar-create --registrar-id ID --target-registrar-id ID --registrar NAME
     registrar                      Can have domains
     create-domain                  Can create domains
     update-domain                  Can update domains
+    cancel-domain                  Can cancel domains
+    uncancel-domain                Can uncancel domains
     query-domain                   Can query domain details
     transfer-domain                Can transfer domains
     update-registrar               Can update own detials
@@ -512,6 +514,8 @@ sxc registrar-update --registrar-id ID [OPTIONS]
     registrar                      Can have domains
     create-domain                  Can create domains
     update-domain                  Can update domains
+    cancel-domain                  Can cancel domains
+    uncancel-domain                Can uncancel domains
     query-domain                   Can query domain details
     transfer-domain                Can transfer domains
     update-registrar               Can update own detials
