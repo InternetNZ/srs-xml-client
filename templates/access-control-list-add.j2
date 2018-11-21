@@ -6,7 +6,11 @@
       <AccessControlListEntry {% if access_control.domain_name %} DomainName="{{ access_control.domain_name }}" {% endif %}
                               {% if access_control.registrar_id %} RegistrarId="{{ access_control.registrar_id }}" {% endif %}
                               {% if access_control.ip_address %} Address="{{ access_control.ip_address }}" {% endif %}
-                              {% if access_control.comment %} Comment="{{ access_control.comment }}" {% endif %}/>
+                              {% if access_control.comment %} Comment="{{ access_control.comment }}" {% endif %}>
+        {% if access_control.effective %}
+          <EffectiveDate Year="{{ access_control.effective.year }}" Month="{{ access_control.effective.month }}" Day="{{ access_control.effective.day }}" Hour="{{ access_control.effective.hour }}" Minute="{{ access_control.effective.minute }}" Second="{{ access_control.effective.second }}" {% if access_control.effective.time_zone %} TimeZoneOffset="{{ access_control.effective.time_zone }}" {% endif %}/>
+        {% endif %}
+      </AccessControlListEntry>
     {% endfor %}
     {% if audit_text %} <AuditText>{{ audit_text }}</AuditText> {% endif %}
   </AccessControlListAdd>

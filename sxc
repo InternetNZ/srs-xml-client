@@ -489,7 +489,7 @@ def parse_arguments():
             suboptions = False
                 
             while True:
-                option = getopt.option(('domain', 'registrar-id', 'ip', 'comment'))
+                option = getopt.option(('domain', 'registrar-id', 'ip', 'comment', 'effective'))
 
                 if option is None:
                     break
@@ -514,6 +514,24 @@ def parse_arguments():
                     arguments['access_controls'][-1]['ip_address'] = getopt.argument(True, r'(?ix) ^ (?: [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ | (?: [a-f0-9]{1,4} :){1,7} [a-f0-9]{1,4}) (?: / [0-9]+)? $')
                 elif option == 'comment':
                     arguments['access_controls'][-1]['comment'] = getopt.argument(True)
+                elif option == 'effective':
+                    argument = getopt.argument(True)
+                    match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
+
+                    if match is None:
+                        raise Exception('Invalid effective date: {}'.format(option, argument))
+
+                    arguments['access_controls'][-1]['effective'] = {}
+
+                    arguments['access_controls'][-1]['effective']['day'] = int(match.group('day'))
+                    arguments['access_controls'][-1]['effective']['month'] = int(match.group('month'))
+                    arguments['access_controls'][-1]['effective']['year'] = int(match.group('year'))
+
+                    arguments['access_controls'][-1]['effective']['hour'] = int(match.group('hour')) if match.group('hour') else 0
+                    arguments['access_controls'][-1]['effective']['minute'] = int(match.group('minute')) if match.group('minute') else 0
+                    arguments['access_controls'][-1]['effective']['second'] = int(match.group('second')) if match.group('second') else 0
+
+                    arguments['access_controls'][-1]['effective']['time_zone'] = match.group('time_zone')
 
         # scheduled jobs
         elif option == 'process':
