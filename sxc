@@ -814,7 +814,7 @@ def main():
     action, arguments = parse_arguments()
 
     if action == 'help':
-        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True, trim_blocks = True, lstrip_blocks = True).get_template('client-help.j2')
+        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), trim_blocks = True).get_template('client-help.j2')
         content = template.render(arguments)
 
         print(content, end = '')
@@ -837,8 +837,8 @@ def main():
         if 'action_id' not in arguments and action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'sys-params-create', 'sys-params-update', 'access-control-list-add', 'access-control-list-remove', 'adjust-registrar-account', 'billed-until-adjustment', 'billing-amount-update', 'schedule-create', 'schedule-update', 'schedule-cancel', 'run-log-create'):
             arguments['action_id'] = uuid.uuid1()
 
-        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True, trim_blocks = True, lstrip_blocks = True).get_template(action + '.j2')
-        content = template.render(arguments)
+        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True).get_template(action + '.j2')
+        content = re.sub(r'(?x) > [ \n]+ <', '><', template.render(arguments))
 
     xml_document = etree.fromstring(content, etree.XMLParser(remove_blank_text = True, load_dtd = True))
 

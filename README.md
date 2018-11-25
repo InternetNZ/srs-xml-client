@@ -215,3 +215,5 @@ TODO
 
 * Add an output filter that converts XML to something more readable
   YAML-like syntax?
+
+* Add XML syntax highlighting.
