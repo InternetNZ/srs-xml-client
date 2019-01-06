@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# Copyright 2018 InternetNZ Inc.
+# Copyright 2018-2019 InternetNZ Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ import jinja2
 from lxml import etree
 import requests
 from urllib.parse import parse_qsl
+import traceback
 
 
 PARENT_DIR = os.path.dirname(sys.argv[0])
@@ -47,6 +48,14 @@ REGISTRY_CERTIFICATE = 'registry/srs-root-ca.pem'
 
 VERSION_MAJOR = '7'
 VERSION_MINOR = '16'
+
+
+class ArgumentError(Exception):
+    pass
+
+
+class InternalError(Exception):
+    pass
 
 
 class GetOptions():
@@ -61,7 +70,7 @@ class GetOptions():
         option = self.arguments[0]
 
         if option[0:2] != '--':
-            raise Exception('Non-option \'{}\' found'.format(option))
+            raise ArgumentError('Non-option \'{}\' found'.format(option))
 
         option = option[2:]
 
@@ -81,12 +90,12 @@ class GetOptions():
 
         if argument is None or not len(argument) or argument[0:2] == '--':
             if required:
-                raise Exception('Option --{} requires an argument'.format(self.last_option))
+                raise ArgumentError('Option --{} requires an argument'.format(self.last_option))
 
             return None
 
         if pattern and not re.search(pattern, argument):
-            raise Exception('Invalid --{} argument: {}'.format(self.last_option, argument))
+            raise ArgumentError('Invalid --{} argument: {}'.format(self.last_option, argument))
 
         self.arguments.pop(0)
         
@@ -100,7 +109,7 @@ def parse_arguments():
     action = getopt.argument(False)
 
     if action not in ('domain-create', 'domain-update', 'domain-details-query', 'handle-create', 'handle-update', 'handle-details-query', 'whois', 'udai-valid-query', 'action-details-query', 'get-messages', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'registrar-account-query', 'registrar-details-query', 'access-control-list-add', 'access-control-list-remove', 'access-control-list-query', 'billing-amount-query', 'billing-amount-update', 'adjust-registrar-account', 'billed-until-adjustment', 'deferred-income-summary-query', 'deferred-income-detail-query', 'sys-params-create', 'sys-params-update', 'sys-params-query', 'schedule-create', 'schedule-update', 'schedule-cancel', 'schedule-query', 'run-log-create', 'run-log-query', 'send-xml', 'help', 'version'):
-        raise Exception('Invalid action, run \'{} help\' to see list of available actions'.format(sys.argv[0]))
+        raise ArgumentError('Invalid action, run \'{} help\' to see list of available actions'.format(sys.argv[0]))
 
     if action in ('help', 'version'):
         if action == 'help':
@@ -229,7 +238,7 @@ def parse_arguments():
                 elif argument == 'audit':
                     arguments['fields']['audit_text'] = True
                 else:
-                    raise Exception('Unknown domain --fields: {}'.format(argument))
+                    raise ArgumentError('Unknown domain --fields: {}'.format(argument))
                 
         # search results
         elif option in ('full', 'brief'):
@@ -274,7 +283,7 @@ def parse_arguments():
                     match = re.search(r'(?ix) ^ \+? (?P<country_code> [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9]+) $', argument)
 
                     if match is None:
-                        raise Exception('Invalid --{} number: {}'.format(option, argument))
+                        raise ArgumentError('Invalid --{} number: {}'.format(option, argument))
 
                     arguments[contact][number]['country_code'] = match.group('country_code')
                     arguments[contact][number]['area_code'] = match.group('area_code') or ''
@@ -358,7 +367,7 @@ def parse_arguments():
             match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
 
             if match is None:
-                raise Exception('Invalid --{} date: {}'.format(option, argument))
+                raise ArgumentError('Invalid --{} date: {}'.format(option, argument))
 
             arguments[date] = {}
             
@@ -398,7 +407,7 @@ def parse_arguments():
                     role = re.sub(r'-', '_', argument)
                     arguments['roles'][role] = True
                 else:
-                    raise Exception('Unknown registrar --roles: {}'.format(argument))
+                    raise ArgumentError('Unknown registrar --roles: {}'.format(argument))
                 
         elif option == 'no-roles':
             arguments['no_roles'] = True
@@ -479,7 +488,7 @@ def parse_arguments():
                 elif argument == 'ip':
                     arguments['types']['ip_address'] = True
                 else:
-                    raise Exception('Unknown access control --type: {}'.format(argument))
+                    raise ArgumentError('Unknown access control --type: {}'.format(argument))
 
         # acl entries
         elif option == 'entry':
@@ -519,7 +528,7 @@ def parse_arguments():
                     match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
 
                     if match is None:
-                        raise Exception('Invalid effective date: {}'.format(option, argument))
+                        raise ArgumentError('Invalid effective date: {}'.format(option, argument))
 
                     arguments['access_controls'][-1]['effective'] = {}
 
@@ -559,7 +568,7 @@ def parse_arguments():
             arguments['file'] = getopt.argument(True)
 
         else:
-            raise Exception('Unknown option \'{}\' found'.format(option))
+            raise ArgumentError('Unknown option \'{}\' found'.format(option))
 
     return action, arguments
 
@@ -569,58 +578,58 @@ def check_arguments(action, arguments):
         arguments['registrar_id'] = os.environ.get('REGISTRAR_ID')
 
         if arguments['registrar_id'] is None:
-            raise Exception('No --registrar-id specified')
+            raise ArgumentError('No --registrar-id specified')
 
     if 'dry_run' not in arguments and 'registry_url' not in arguments:
         arguments['registry_url'] = os.environ.get('REGISTRY_URL')
 
         if arguments['registry_url'] is None:
-            raise Exception('No --url specified')
+            raise ArgumentError('No --url specified')
 
     if action in ('domain-create', 'domain-update', 'udai-valid-query', 'whois', 'adjust-registrar-account', 'billed-until-adjustment'):
         if 'domain_name' not in arguments:
-            raise Exception('No --domain specified')
+            raise ArgumentError('No --domain specified')
 
     if action == 'domain-create':
         if 'term' not in arguments:
-            raise Exception('No --term specified')
+            raise ArgumentError('No --term specified')
 
         if 'registrant' not in arguments:
-            raise Exception('No --registrant specified')
+            raise ArgumentError('No --registrant specified')
 
     if action in ('handle-create', 'handle-update'):
         if 'handle' not in arguments:
-            raise Exception('No --handle contact specified')
+            raise ArgumentError('No --handle contact specified')
 
         if 'handle_id' not in arguments['handle']:
-            raise Exception('No --handle-id specified')
+            raise ArgumentError('No --handle-id specified')
 
     if action == 'udai-valid-query':
         if 'udai' not in arguments:
-            raise Exception('No --udai specified')
+            raise ArgumentError('No --udai specified')
 
     if action == 'ack-message':
         if 'transaction_id' not in arguments:
-            raise Exception('No --transaction-id specified')
+            raise ArgumentError('No --transaction-id specified')
 
     if action == 'action-details-query':
         if 'action_id' not in arguments:
-            raise Exception('No --action-id specified')
+            raise ArgumentError('No --action-id specified')
 
     if action in ('registrar-create', 'billed-until-adjustment'):
         if 'target_registrar_id' not in arguments:
-            raise Exception('No --target-registrar-id specified')
+            raise ArgumentError('No --target-registrar-id specified')
 
     if action == 'registrar-create':
         if 'registrar_name' not in arguments:
-            raise Exception('No --registrar specified')
+            raise ArgumentError('No --registrar specified')
 
         if 'account_ref' not in arguments:
-            raise Exception('No --accref specified')
+            raise ArgumentError('No --accref specified')
 
         for contact in ('public', 'private', 'technical'):
             if contact not in arguments:
-                raise Exception('No --{} specified'.format(contact))
+                raise ArgumentError('No --{} specified'.format(contact))
 
     if action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'registrar-create', 'registrar-update'):
         for contact in ['registrant', 'admin', 'technical', 'handle', 'public', 'private']:
@@ -636,105 +645,105 @@ def check_arguments(action, arguments):
                 continue
 
             if 'name' not in arguments[contact]:
-                raise Exception('No {} --name specified'.format(contact))
+                raise ArgumentError('No {} --name specified'.format(contact))
 
             if 'email_address' not in arguments[contact]:
-                raise Exception('No {} --email specified'.format(contact))
+                raise ArgumentError('No {} --email specified'.format(contact))
 
             # if any postal address is specified or this is a create action
             if 'postal_address1' in arguments[contact] or 'postal_address2' in arguments[contact] or 'no_postal_address2' in arguments[contact] or 'postal_city' in arguments[contact] or 'postal_province' in arguments[contact] or 'no_postal_province' in arguments[contact] or 'postal_country' in arguments[contact] or 'postal_code' in arguments or 'no_postal_code' in arguments[contact] or action in ('domain-create', 'handle-create', 'registrar-create'):
                 if 'postal_address1' not in arguments[contact]:
-                    raise Exception('No {} --address1 specified'.format(contact))
+                    raise ArgumentError('No {} --address1 specified'.format(contact))
                 
                 if 'postal_city' not in arguments[contact]:
-                    raise Exception('No {} --city specified'.format(contact))
+                    raise ArgumentError('No {} --city specified'.format(contact))
 
                 if 'postal_country' not in arguments[contact]:
-                    raise Exception('No {} --country specified'.format(contact))
+                    raise ArgumentError('No {} --country specified'.format(contact))
 
             if 'phone' not in arguments[contact] and action in ('domain-create', 'handle-create', 'registrar-create'):
-                raise Exception('No {} --phone specified'.format(contact))
+                raise ArgumentError('No {} --phone specified'.format(contact))
 
     if action in ('domain-create', 'domain-update'):
         if 'name_servers' in arguments:
             for index in range(0, len(arguments['name_servers'])):
                 if 'hostname' not in arguments['name_servers'][index]:
-                    raise Exception('No nameserver {} --name specified'.format(index + 1))
+                    raise ArgumentError('No nameserver {} --name specified'.format(index + 1))
 
         if 'dnssec_keys' in arguments:
             for index in range(0, len(arguments['dnssec_keys'])):
                 if 'digest' not in arguments['dnssec_keys'][index]:
-                    raise Exception('No dnssec {} --digest specified'.format(index + 1))
+                    raise ArgumentError('No dnssec {} --digest specified'.format(index + 1))
 
                 if 'key_tag' not in arguments['dnssec_keys'][index]:
-                    raise Exception('No dnssec {} --tag specified'.format(index + 1))
+                    raise ArgumentError('No dnssec {} --tag specified'.format(index + 1))
 
                 if 'algorithm' not in arguments['dnssec_keys'][index]:
-                    raise Exception('No dnssec {} --algorithm specified'.format(index + 1))
+                    raise ArgumentError('No dnssec {} --algorithm specified'.format(index + 1))
 
                 if 'digest_type' not in arguments['dnssec_keys'][index]:
-                    raise Exception('No dnssec {} --type specified'.format(index + 1))
+                    raise ArgumentError('No dnssec {} --type specified'.format(index + 1))
 
     if action == 'billed-until-adjustment':
         if 'billed_until' not in arguments:
-            raise Exception('No --billed-until date specified')
+            raise ArgumentError('No --billed-until date specified')
 
     if action == 'billing-amount-update':
         if 'amount' not in arguments:
-            raise Exception('No --amount specified')
+            raise ArgumentError('No --amount specified')
 
     if action == 'adjust-registrar-account':
         if 'target_registrar_id' not in arguments:
-            raise Exception('No --target-registrar-id specified')
+            raise ArgumentError('No --target-registrar-id specified')
 
         if 'credit' not in arguments and 'debit' not in arguments:
-            raise Exception('No --credit or --debit specified')
+            raise ArgumentError('No --credit or --debit specified')
 
         if 'transaction' not in arguments or 'period_start' not in arguments or 'period_end' not in arguments:
-            raise Exception('No --transaction, --period-start or --period-end date specified')
+            raise ArgumentError('No --transaction, --period-start or --period-end date specified')
 
     if action in ('adjust-registrar-account', 'billed-until-adjustment'):
         if 'audit_text' not in arguments:
-            raise Exception('No --audit specified')
+            raise ArgumentError('No --audit specified')
 
     if action in ('schedule-create', 'schedule-update', 'schedule-cancel', 'run-log-create'):
         if 'process_name' not in arguments:
-            raise Exception('No --process specified')
+            raise ArgumentError('No --process specified')
 
         if 'first_run' not in arguments:
-            raise Exception('No --first-run date specified')
+            raise ArgumentError('No --first-run date specified')
 
     if action == 'schedule-create':
         if 'frequency' not in arguments:
-            raise Exception('No --frequency specified')
+            raise ArgumentError('No --frequency specified')
 
     if action in ('access-control-list-add', 'access-control-list-remove'):
         if 'resource' not in arguments:
-            raise Exception('No --resource specified')
+            raise ArgumentError('No --resource specified')
 
         if 'whitelist' not in arguments and 'blacklist' not in arguments:
-            raise Exception('No --whitelist or --blacklist specified')
+            raise ArgumentError('No --whitelist or --blacklist specified')
 
         if 'access_controls' not in arguments or not len(arguments['access_controls']):
-            raise Exception('No access control --entry specified')
+            raise ArgumentError('No access control --entry specified')
 
         for index in range(0, len(arguments['access_controls'])):
             if 'domain_name' not in arguments['access_controls'][index] and 'registrar_id' not in arguments['access_controls'][index] and 'ip_address' not in arguments['access_controls'][index]:
-                raise Exception('No access control entry {} --domain, --registrar-id or --ip specified'.format(index + 1))
+                raise ArgumentError('No access control entry {} --domain, --registrar-id or --ip specified'.format(index + 1))
 
     if action in ('deferred-income-summary-query', 'deferred-income-detail-query'):
         if 'base_month' not in arguments or 'base_year' not in arguments:
-            raise Exception('No --base-month or --base-year specified')
+            raise ArgumentError('No --base-month or --base-year specified')
 
         if 'income_month' not in arguments or 'income_year' not in arguments:
-            raise Exception('No --income-month or --income-year specified')
+            raise ArgumentError('No --income-month or --income-year specified')
 
     if action == 'run-log-create':
         if 'success' not in arguments and 'failure' not in arguments:
-            raise Exception('No --success or --failure specified')
+            raise ArgumentError('No --success or --failure specified')
 
         if 'logged' not in arguments:
-            raise Exception('No --logged date specified')
+            raise ArgumentError('No --logged date specified')
 
 
 def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout):
@@ -757,7 +766,7 @@ def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout
     output, errors = process.communicate(timeout = 10)
 
     if process.returncode:
-        raise Exception('Signature detach-signing failed: {}'.format(str(errors, 'ascii')))
+        raise InternalError('Signature detach-signing failed: {}'.format(str(errors, 'ascii')))
 
     with open(temp_dir.name + '/signature', 'r') as file:
         signature = file.read()
@@ -766,7 +775,7 @@ def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout
     response.raise_for_status()
 
     if response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
-        raise Exception('Unsupported content-type: {}'.format(response.headers['Content-Type']))
+        raise InternalError('Unsupported content-type: {}'.format(response.headers['Content-Type']))
 
     content = None
     signature = None
@@ -778,7 +787,7 @@ def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout
             signature = value
 
     if not content:
-        raise Exception('No \'r\' parameter in response: {}'.format(response.text))
+        raise InternalError('No \'r\' parameter in response: {}'.format(response.text))
 
     # some protocol errors don't have a signature
     if signature:
@@ -799,13 +808,13 @@ def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout
         output, errors = process.communicate(timeout = 10)
 
         if process.returncode:
-            raise Exception('Signature verification failed: {}'.format(str(errors, 'ascii')))
+            raise InternalError('Signature verification failed: {}'.format(str(errors, 'ascii')))
 
         with open(PARENT_DIR + '/' + REGISTRY_KEY_ID, 'r') as file:
             key_id = file.read().strip()
 
         if not re.search('(?ix) using [ ] (?:RSA | DSA) [ ] key [ ] ' + key_id, str(errors, 'ascii')):
-            raise Exception('Incorrect key: {}'.format(str(errors, 'ascii')))
+            raise InternalError('Incorrect key: {}'.format(str(errors, 'ascii')))
 
     return bytes(content, 'utf-8')
 
@@ -870,8 +879,11 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except Exception as error:
+    except (ArgumentError, InternalError) as error:
         print(error, file = sys.stderr)
+        exit(1)
+    except Exception:
+        traceback.print_exc()
         exit(1)
 
     exit(0)
