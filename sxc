@@ -883,7 +883,7 @@ if __name__ == '__main__':
         print(error, file = sys.stderr)
         exit(1)
     except Exception:
-        traceback.print_exc()
+        traceback.print_exc(file = sys.stderr)
         exit(1)
 
     exit(0)
