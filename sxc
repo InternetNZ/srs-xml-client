@@ -403,7 +403,7 @@ def parse_arguments():
                 if argument is None:
                     break
 
-                if argument in ('connect', 'registry', 'registrar', 'whois', 'create-domain', 'update-domain', 'cancel-domain', 'uncancel-domain', 'transfer-domain', 'query-domain', 'query-all-domains', 'update-disclosure', 'update-registrar', 'administer', 'supervisor', 'query-acl', 'query-reg-acl', 'update-acl'):
+                if argument in ('connect', 'registry', 'registrar', 'whois', 'create-domain', 'update-domain', 'cancel-domain', 'uncancel-domain', 'release-domain', 'transfer-domain', 'query-domain', 'query-all-domains', 'update-disclosure', 'update-registrar', 'administer', 'supervisor', 'query-acl', 'query-reg-acl', 'update-acl'):
                     role = re.sub(r'-', '_', argument)
                     arguments['roles'][role] = True
                 else:
