@@ -418,7 +418,7 @@ def parse_arguments():
             required = True
 
             while True:
-                argument = getopt.argument(required, r'(?ix) ^ [a-z]+ \. [a-z]+ $')
+                argument = getopt.argument(required, r'(?ix) ^ ([a-z0-9]+ \.)? [a-z0-9]+ $')
 
                 if argument is None:
                     break
