@@ -88,7 +88,7 @@ class GetOptions():
         else:
             argument = None
 
-        if argument is None or not len(argument) or argument[0:2] == '--':
+        if argument is None or argument[0:2] == '--':
             if required:
                 raise ArgumentError('Option --{} requires an argument'.format(self.last_option))
 
@@ -737,6 +737,13 @@ def check_arguments(action, arguments):
 
         if 'income_month' not in arguments or 'income_year' not in arguments:
             raise ArgumentError('No --income-month or --income-year specified')
+
+    if action in ('sys-params-create', 'sys-params-update'):
+        if 'name' not in arguments:
+            raise ArgumentError('No --name specified')
+
+        if 'value' not in arguments:
+            raise ArgumentError('No --value specified')
 
     if action == 'run-log-create':
         if 'success' not in arguments and 'failure' not in arguments:
