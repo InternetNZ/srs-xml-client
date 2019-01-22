@@ -21,9 +21,10 @@ Action is one of the following:
 Global options are:
 
   --registrar-id ID                ID of your registrar
+  --sign FILE                      File containing the registrar PGP key
   --url URL                        URL of the SRS system
-  --gpg DIR                        GPG home directory
-  --key ID                         Key ID used to sign requests
+  --certificate FILE               File containing the registry SSL certificate
+  --verify FILE                    File containing the registry PGP key
   --timeout SECONDS                Number of seconds to wait for a response
   --version VERSION                Set the protocol version
   --dry-run                        Print out XML that would have been sent and then exit
@@ -49,10 +50,11 @@ Version is specified in the format:
 
 Environment variables that are the defaults for options are:
 
-   REGISTRAR_ID   --registrar-id
-   REGISTRY_URL   --url
-   GNUPGHOME      --gpg
-   REGISTRAR_KEY  --key
+   REGISTRAR_ID          --registrar-id
+   REGISTRAR_KEY         --sign
+   REGISTRY_URL          --url
+   REGISTRY_CERTIFICATE  --certificate
+   REGISTRY_KEY          --verify
 
 The 'help' action will display this message.
 

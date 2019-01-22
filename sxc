@@ -31,11 +31,10 @@
 import sys
 import os
 import re
-import tempfile
-import subprocess
 import uuid
 import jinja2
 from lxml import etree
+import pgpy
 import requests
 from urllib.parse import parse_qsl
 import traceback
@@ -43,11 +42,11 @@ import traceback
 
 PARENT_DIR = os.path.dirname(sys.argv[0])
 
-REGISTRY_KEY_ID = 'registry/pgp-keyid.txt'
+REGISTRY_KEY = 'registry/srs-pgp-key.asc'
 REGISTRY_CERTIFICATE = 'registry/srs-root-ca.pem'
 
-VERSION_MAJOR = '7'
-VERSION_MINOR = '16'
+VERSION_MAJOR = '8'
+VERSION_MINOR = '0'
 
 
 class ArgumentError(Exception):
@@ -129,10 +128,12 @@ def parse_arguments():
         # global
         if option == 'url':
             arguments['registry_url'] = getopt.argument(True)
-        elif option == 'gpg':
-            arguments['gpg_home'] = getopt.argument(True)
-        elif option == 'key':
-            arguments['gpg_key'] = getopt.argument(True, r'(?ix) ^ [0-9a-f]+ $').upper()
+        elif option == 'certificate':
+            arguments['registry_certificate'] = getopt.argument(True)
+        elif option == 'sign':
+            arguments['registrar_key'] = getopt.argument(True)
+        elif option == 'verify':
+            arguments['registry_key'] = getopt.argument(True)
         elif option == 'dry-run':
             arguments['dry_run'] = True
         elif option == 'timeout':
@@ -280,7 +281,7 @@ def parse_arguments():
                     arguments[contact][number] = {}
                     
                     argument = getopt.argument(True)
-                    match = re.search(r'(?ix) ^ \+? (?P<country_code> [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9]+) $', argument)
+                    match = re.search(r'(?ix) ^ \+? (?P<country_code> \+? [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9\-]+) $', argument)
 
                     if match is None:
                         raise ArgumentError('Invalid --{} number: {}'.format(option, argument))
@@ -580,11 +581,31 @@ def check_arguments(action, arguments):
         if arguments['registrar_id'] is None:
             raise ArgumentError('No --registrar-id specified')
 
-    if 'dry_run' not in arguments and 'registry_url' not in arguments:
-        arguments['registry_url'] = os.environ.get('REGISTRY_URL')
+    # the following are only needed if we are going to actually send a request
+    if 'dry_run' not in arguments:
+        if 'registry_url' not in arguments:
+            arguments['registry_url'] = os.environ.get('REGISTRY_URL')
 
-        if arguments['registry_url'] is None:
-            raise ArgumentError('No --url specified')
+            if arguments['registry_url'] is None:
+                raise ArgumentError('No --url specified')
+
+        if 'registry_certificate' not in arguments:
+            arguments['registry_certificate'] = os.environ.get('REGISTRY_CERTIFICATE')
+
+            if arguments['registry_certificate'] is None:
+                arguments['registry_certificate'] = PARENT_DIR + '/' + REGISTRY_CERTIFICATE
+
+        if 'registry_key' not in arguments:
+            arguments['registry_key'] = os.environ.get('REGISTRY_KEY')
+
+            if arguments['registry_key'] is None:
+                arguments['registry_key'] = PARENT_DIR + '/' + REGISTRY_KEY
+
+        if 'registrar_key' not in arguments:
+            arguments['registrar_key'] = os.environ.get('REGISTRAR_KEY')
+
+            if arguments['registrar_key'] is None:
+                raise ArgumentError('No --sign specified')
 
     if action in ('domain-create', 'domain-update', 'udai-valid-query', 'whois', 'adjust-registrar-account', 'billed-until-adjustment'):
         if 'domain_name' not in arguments:
@@ -632,7 +653,7 @@ def check_arguments(action, arguments):
                 raise ArgumentError('No --{} specified'.format(contact))
 
     if action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'registrar-create', 'registrar-update'):
-        for contact in ['registrant', 'admin', 'technical', 'handle', 'public', 'private']:
+        for contact in ('registrant', 'admin', 'technical', 'handle', 'public', 'private'):
             if contact not in arguments:
                 continue
 
@@ -753,36 +774,19 @@ def check_arguments(action, arguments):
             raise ArgumentError('No --logged date specified')
 
 
-def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout):
-    temp_dir = tempfile.TemporaryDirectory(prefix = '/tmp/gpg-')
+def send_request(registry_url, registry_certificate, registry_key, registrar_id, registrar_key, content, timeout):
+    with open(registry_key, 'r') as file:
+        verifying_key = pgpy.PGPKey()
+        verifying_key.parse(file.read())
 
-    with open(temp_dir.name + '/plaintext', 'w') as file:
-        file.write(content)
+    with open(registrar_key, 'r') as file:
+        signing_key = pgpy.PGPKey()
+        signing_key.parse(file.read())
 
-    arguments = ['/usr/bin/gpg', '--batch', '--armor']
+    signature = str(signing_key.sign(content))
 
-    if gpg_home:
-        arguments.extend(['--homedir', gpg_home])
-
-    if gpg_key:
-        arguments.extend(['--default-key', gpg_key])
-
-    arguments.extend(['--output', temp_dir.name + '/signature', '--detach-sign', temp_dir.name + '/plaintext'])
-
-    process = subprocess.Popen(arguments, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    output, errors = process.communicate(timeout = 10)
-
-    if process.returncode:
-        raise InternalError('Signature detach-signing failed: {}'.format(str(errors, 'ascii')))
-
-    with open(temp_dir.name + '/signature', 'r') as file:
-        signature = file.read()
-
-    response = requests.post(registry_url, verify = PARENT_DIR + '/' + REGISTRY_CERTIFICATE, headers = {'User-Agent': 'sxc/0.3'}, data = {'n': registrar_id, 'r': content, 's': signature}, timeout = timeout)
+    response = requests.post(registry_url, verify = registry_certificate, headers = {'User-Agent': 'sxc/0.4'}, data = {'n': registrar_id, 'r': content, 's': signature}, timeout = timeout)
     response.raise_for_status()
-
-    if response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
-        raise InternalError('Unsupported content-type: {}'.format(response.headers['Content-Type']))
 
     content = None
     signature = None
@@ -791,37 +795,15 @@ def send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout
         if key == 'r':
             content = value
         elif key == 's':
-            signature = value
+            signature = pgpy.PGPSignature()
+            signature.parse(value)
 
     if not content:
         raise InternalError('No \'r\' parameter in response: {}'.format(response.text))
 
-    # some protocol errors don't have a signature
-    if signature:
-        with open(temp_dir.name + '/plaintext', 'w') as file:
-            file.write(content)
-
-        with open(temp_dir.name + '/signature', 'w') as file:
-            file.write(signature)
-            
-        arguments = ['/usr/bin/gpg', '--batch', '--armor']
-
-        if gpg_home:
-            arguments.extend(['--homedir', gpg_home])
-
-        arguments.extend(['--keyid-format', 'long', '--verify', temp_dir.name + '/signature', temp_dir.name + '/plaintext'])
-
-        process = subprocess.Popen(arguments, stdin = None, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-        output, errors = process.communicate(timeout = 10)
-
-        if process.returncode:
-            raise InternalError('Signature verification failed: {}'.format(str(errors, 'ascii')))
-
-        with open(PARENT_DIR + '/' + REGISTRY_KEY_ID, 'r') as file:
-            key_id = file.read().strip()
-
-        if not re.search('(?ix) using [ ] (?:RSA | DSA) [ ] key [ ] ' + key_id, str(errors, 'ascii')):
-            raise InternalError('Incorrect key: {}'.format(str(errors, 'ascii')))
+    # some protocol errors do not have a signature
+    if signature and not verifying_key.verify(content, signature):
+        raise InternalError('Invalid signature')
 
     return bytes(content, 'utf-8')
 
@@ -838,15 +820,12 @@ def main():
 
     check_arguments(action, arguments)
 
-    # lxml doesn't allow us to specifc this separately without creating a loader class
-    content = '<!DOCTYPE SRS SYSTEM "' + PARENT_DIR + '/registry/protocol.dtd">'
-
     if action == 'send-xml':
         if 'file' in arguments:
             with open(arguments['file'], 'r') as file:
-                content += file.read()
+                content = file.read()
         else:
-            content += sys.stdin.read()
+            content = sys.stdin.read()
 
     else:
         # auto-generate a timed-based action uuid for write actions
@@ -856,7 +835,7 @@ def main():
         template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True).get_template(action + '.j2')
         content = re.sub(r'(?x) > [ \n]+ <', '><', template.render(arguments))
 
-    xml_document = etree.fromstring(content, etree.XMLParser(remove_blank_text = True, load_dtd = True))
+    xml_document = etree.fromstring(content)
 
     if 'dry_run' in arguments:
         print(str(etree.tostring(xml_document, pretty_print = True), 'utf-8'), end = '')
@@ -864,21 +843,16 @@ def main():
 
     content = str(etree.tostring(xml_document, pretty_print = False), 'utf-8')
 
-    registrar_id = arguments['registrar_id']
     registry_url = arguments['registry_url']
+    registry_certificate = arguments['registry_certificate']
+    registry_key = arguments['registry_key']
 
-    # gnupg will check the GNUPGHOME environment variable
-    gpg_home = arguments['gpg_home'] if 'gpg_home' in arguments else None
-
-    if 'gpg_key' in arguments:
-        gpg_key = arguments['gpg_key']
-    else:
-        gpg_key = os.environ.get('REGISTRAR_KEY')
-
+    registrar_id = arguments['registrar_id']
+    registrar_key = arguments['registrar_key']
     timeout = arguments['timeout'] if 'timeout' in arguments else 300
 
-    content = send_request(registry_url, registrar_id, gpg_home, gpg_key, content, timeout)
-    xml_document = etree.fromstring(content, etree.XMLParser(remove_blank_text = True))
+    content = send_request(registry_url, registry_certificate, registry_key, registrar_id, registrar_key, content, timeout)
+    xml_document = etree.fromstring(content)
 
     print(str(etree.tostring(xml_document, pretty_print = True), 'utf-8'), end = '')
 
