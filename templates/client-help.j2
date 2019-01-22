@@ -22,7 +22,7 @@ Global options are:
 
   --registrar-id ID                ID of your registrar
   --sign FILE                      File containing the registrar PGP key
-  --url URL                        URL of the SRS system
+  --url URL                        URL of the .nz Shared Registry System
   --certificate FILE               File containing the registry SSL certificate
   --verify FILE                    File containing the registry PGP key
   --timeout SECONDS                Number of seconds to wait for a response
@@ -34,27 +34,27 @@ was not specified.
 
 Dates may be specified in multiple formats:
 
-   DAY/MONTH/YEAR
-   DAY/MONTH/YEAR HOUR:MINUTE
-   DAY/MONTH/YEAR HOUR:MINUTE:SECOND
-   DAY/MONTH/YEAR HOUR:MINUTE:SECOND TIMEZONE
+  DAY/MONTH/YEAR
+  DAY/MONTH/YEAR HOUR:MINUTE
+  DAY/MONTH/YEAR HOUR:MINUTE:SECOND
+  DAY/MONTH/YEAR HOUR:MINUTE:SECOND TIMEZONE
 
 Phone and fax numbers are specified in the format:
 
-   COUNTRY-AREA-LOCAL
-   COUNTRY-LOCAL
+  COUNTRY-AREA-LOCAL
+  COUNTRY-LOCAL
 
 Version is specified in the format:
 
-   MAJOR.MINOR
+  MAJOR.MINOR
 
 Environment variables that are the defaults for options are:
 
-   REGISTRAR_ID          --registrar-id
-   REGISTRAR_KEY         --sign
-   REGISTRY_URL          --url
-   REGISTRY_CERTIFICATE  --certificate
-   REGISTRY_KEY          --verify
+  REGISTRAR_ID                     --registrar-id
+  REGISTRAR_KEY                    --sign
+  REGISTRY_URL                     --url
+  REGISTRY_CERTIFICATE             --certificate
+  REGISTRY_KEY                     --verify
 
 The 'help' action will display this message.
 
@@ -62,7 +62,7 @@ Run 'sxc help ACTION' to see which options are available for that action. The op
 shown in the example command line are required.
 
 {% elif version %}
-sxc version 0.3
+sxc version 0.4
 
 Copyright 2018 Internet New Zealand Inc.
 

@@ -35,7 +35,7 @@ The following environment variables can be used:
   `https://srstest.srs.net.nz/srs/registrar`, used when `--url` is not
   specified.
 
-* `REGISTRY_CERTIFICATE` X509 CA certificate that authenticates the HTTPS
+* `REGISTRY_CERTIFICATE` SSL CA certificate that authenticates the HTTPS
   connection, used when `--certificate` is not specified.
 
 * `REGISTRY_KEY` The PGP key used to verify responses from the registry,
