@@ -775,10 +775,6 @@ def check_arguments(action, arguments):
 
 
 def send_request(registry_url, registry_certificate, registry_key, registrar_id, registrar_key, content, timeout):
-    with open(registry_key, 'r') as file:
-        verifying_key = pgpy.PGPKey()
-        verifying_key.parse(file.read())
-
     with open(registrar_key, 'r') as file:
         signing_key = pgpy.PGPKey()
         signing_key.parse(file.read())
@@ -802,8 +798,13 @@ def send_request(registry_url, registry_certificate, registry_key, registrar_id,
         raise InternalError('No \'r\' parameter in response: {}'.format(response.text))
 
     # some protocol errors do not have a signature
-    if signature and not verifying_key.verify(content, signature):
-        raise InternalError('Invalid signature')
+    if signature is not None:
+        with open(registry_key, 'r') as file:
+            verifying_key = pgpy.PGPKey()
+            verifying_key.parse(file.read())
+
+        if not verifying_key.verify(content, signature):
+            raise InternalError('Invalid signature from registry')
 
     return bytes(content, 'utf-8')
 
