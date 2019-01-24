@@ -161,11 +161,9 @@ def parse_arguments():
                     break
 
                 # idna
-                match = re.search(r'(?ix) ^ (?P<label1> [a-z0-9\-\*\?]* [āēīōū]+ [a-z0-9\-\?\*]*) (?P<label2> (?: \. [a-z0-9\-\*\?]+)*) $', argument)
-
-                if match is not None:
+                if re.search(r'(?ix) [āēīōū]', argument):
                     arguments['domain_name_unicode'] = argument
-                    arguments['domain_name'] = 'xn--' + str(match.group('label1').encode('punycode'), 'ascii') + match.group('label2')
+                    arguments['domain_name'] = str(argument.encode('idna'), 'utf-8')
                 else:
                     if 'domain_name_unicode' in arguments:
                         del arguments['domain_name_unicode']
@@ -509,14 +507,13 @@ def parse_arguments():
                     suboptions = True
 
                 if option == 'domain':
-                    # domain is also used for epp acls so we only do IDN handling if it looks like a domain
                     argument = getopt.argument(True)
-                    match = re.search(r'(?ix) ^ (?P<label1> [a-z0-9\-\*\?]* [āēīōū]+ [a-z0-9\-\?\*]*) (?P<label2> (?: \. [a-z0-9\-\*\?]+)*) $', argument)
 
-                    if match is not None:
-                        arguments['access_controls'][-1]['domain_name'] = 'xn--' + str(match.group('label1').encode('punycode'), 'ascii') + match.group('label2')
-                    else:
-                        arguments['access_controls'][-1]['domain_name'] = argument
+                    # domain is also used for epp client acls so we only do IDN if it looks like a domain
+                    if re.search(r'(?ix) [āēīōū]+', argument):
+                        argument = str(argument.encode('idna'), 'utf-8')
+
+                    arguments['access_controls'][-1]['domain_name'] = argument
                 elif option == 'registrar-id':
                     arguments['access_controls'][-1]['registrar_id'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
                 elif option == 'ip':
