@@ -54,7 +54,7 @@ Usage: `sxc ACTION OPTIONS`. Run `sxc help` to see available
 actions.
 
 Each action has a help message that shows all the possible options for that
-action and brielf, what they do. Run `sxc help ACTION` to see that help, eg:
+action and brief, what they do. Run `sxc help ACTION` to see that help, eg:
 
 ```sh
 sxc help domain-update

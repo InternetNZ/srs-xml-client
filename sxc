@@ -264,7 +264,7 @@ def parse_arguments():
                 elif option == 'name':
                     arguments[contact]['name'] = getopt.argument(True)
                 elif option == 'email':
-                    arguments[contact]['email_address'] = getopt.argument(True, r'(?ix) ^ [a-z0-9\.\-\+]+ @ (?: [a-z0-9\-]+ \.)+  [a-z]+ $')
+                    arguments[contact]['email_address'] = getopt.argument(True, r'(?ix) ^ [a-z0-9\.\-\+]+ @ (?: [a-z0-9\-]+ \.)+ [a-z]+ $')
                 elif option in ('privacy', 'no-privacy'):
                     arguments[contact]['privacy'] = not option.startswith('no')
                 elif option in ('address1', 'address2', 'city', 'province'):
@@ -279,7 +279,7 @@ def parse_arguments():
                     arguments[contact][number] = {}
                     
                     argument = getopt.argument(True)
-                    match = re.search(r'(?ix) ^ \+? (?P<country_code> \+? [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9\-]+) $', argument)
+                    match = re.search(r'(?ix) ^ (?P<country_code> \+? [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9\-]+) $', argument)
 
                     if match is None:
                         raise ArgumentError('Invalid --{} number: {}'.format(option, argument))
