@@ -279,7 +279,7 @@ def parse_arguments():
                     arguments[contact][number] = {}
                     
                     argument = getopt.argument(True)
-                    match = re.search(r'(?ix) ^ (?P<country_code> \+? [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9\-]+) $', argument)
+                    match = re.search(r'(?ix) ^ \+? (?P<country_code> [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9\-]+) $', argument)
 
                     if match is None:
                         raise ArgumentError('Invalid --{} number: {}'.format(option, argument))

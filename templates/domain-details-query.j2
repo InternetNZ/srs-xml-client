@@ -14,8 +14,8 @@
       <NameServerFilter>
         {% for name_server in name_servers %}
           <ServerFilter {% if name_server.hostname %} FQDN="{{ name_server.hostname }}" {% endif %}
-                        {% if name_server.ip4_address %} IP4Address="{{ name_server.ip4_address }}" {% endif %}
-                        {% if name_server.ip6_address %} IP6Address="{{ name_server.ip6_address }}" {% endif %}/>
+                        {% if name_server.ip4_address %} IP4Addr="{{ name_server.ip4_address }}" {% endif %}
+                        {% if name_server.ip6_address %} IP6Addr="{{ name_server.ip6_address }}" {% endif %}/>
         {% endfor %}
       </NameServerFilter>
     {% endif %}
