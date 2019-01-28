@@ -324,7 +324,7 @@ def parse_arguments():
                 elif option == 'ip4':
                     arguments['name_servers'][-1]['ip4_address'] = getopt.argument(True, r'(?x) ^ [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ $')
                 elif option == 'ip6':
-                    arguments['name_servers'][-1]['ip6_address'] = getopt.argument(True, r'(?ix) ^ (?: [a-f0-9]{1,4} :){1,7} [a-f0-9]{1,4} $')
+                    arguments['name_servers'][-1]['ip6_address'] = getopt.argument(True, r'(?ix) ^ (?: [a-f0-9]{0,4} :){1,7} [a-f0-9]{1,4} $')
 
         elif option == 'no-nameservers':
             arguments['no_name_servers'] = True
@@ -518,7 +518,7 @@ def parse_arguments():
                     arguments['access_controls'][-1]['registrar_id'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
                 elif option == 'ip':
                     # we should probably use the ipaddress module instead of a regexp for ip addresses, also use separate ip4 and ip6 arguments
-                    arguments['access_controls'][-1]['ip_address'] = getopt.argument(True, r'(?ix) ^ (?: [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ | (?: [a-f0-9]{1,4} :){1,7} [a-f0-9]{1,4}) (?: / [0-9]+)? $')
+                    arguments['access_controls'][-1]['ip_address'] = getopt.argument(True, r'(?ix) ^ (?: [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ | (?: [a-f0-9]{0,4} :){0,7} [a-f0-9]{1,4}) (?: / [0-9]+)? $')
                 elif option == 'comment':
                     arguments['access_controls'][-1]['comment'] = getopt.argument(True)
                 elif option == 'effective':
