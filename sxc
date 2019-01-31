@@ -834,7 +834,7 @@ def main():
             arguments['action_id'] = uuid.uuid1()
 
         template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True).get_template(action + '.j2')
-        content = re.sub(r'(?x) > [ \n]+ <', '><', template.render(arguments))
+        content = re.sub(r'(?x) > [ \t\r\n]+ <', '><', template.render(arguments))
 
     xml_document = etree.fromstring(content)
 
