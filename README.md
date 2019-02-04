@@ -104,11 +104,9 @@ sxc domain-create
     --city "Registrant City"
     --country NZ
     --phone "64-4-123456789"
- --nameserver
-   --name ns1.example.co.nz
-   --ip4 "192.168.0.1"
- --nameserver
-   --name ns2.example.net.nz
+ --nameserver ns1.example.co.nz
+   --ipv4 192.168.0.1
+ --nameserver ns2.example.net.nz
 ```
 
 For actions that take multiple domains, just provide multiple arguments to
@@ -174,15 +172,6 @@ sxc registrar-account-query
 
 TODO
 ----
-
-* Client help messages can be improved and common options put into
-  template blocks (global, registrant, nameserver, dnssec).
-
-* Better validation of command line arguments, `--domain` should only
-  allow wild-cards for actions using `DomainNameFilter`
-
-* Add support for multiple handle-id's to be specified for
-  `HandleDetailsQry`.
 
 * Add an output filter that converts XML to something more readable
   YAML-like syntax?

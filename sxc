@@ -254,14 +254,24 @@ def parse_arguments():
             arguments[contact] = {}
 
             while True:
-                option = getopt.option(('handle-id', 'name', 'email', 'privacy', 'no-privacy', 'address1', 'address2', 'no-address2', 'city', 'province', 'no-province', 'country', 'postcode', 'no-postcode', 'phone', 'fax', 'no-fax'))
+                argument = getopt.argument(False, r'(?ix) ^ [a-z0-9_\-\*\?]{3,16} $')
+
+                if argument is None:
+                    break
+
+                if 'handle_ids' not in arguments[contact]:
+                    arguments[contact]['handle_ids'] = []
+
+                arguments[contact]['handle_id'] = argument
+                arguments[contact]['handle_ids'].append(arguments[contact]['handle_id'])
+
+            while True:
+                option = getopt.option(('name', 'email', 'privacy', 'no-privacy', 'address1', 'address2', 'no-address2', 'city', 'province', 'no-province', 'country', 'postcode', 'no-postcode', 'phone', 'fax', 'no-fax'))
 
                 if option is None:
                     break
 
-                if option == 'handle-id':
-                    arguments[contact]['handle_id'] = getopt.argument(True, r'(?ix) ^ [a-z0-9_\-\*\?]{3,16} $')
-                elif option == 'name':
+                if option == 'name':
                     arguments[contact]['name'] = getopt.argument(True)
                 elif option == 'email':
                     arguments[contact]['email_address'] = getopt.argument(True, r'(?ix) ^ [a-z0-9\.\-\+]+ @ (?: [a-z0-9\-]+ \.)+ [a-z]+ $')
@@ -306,24 +316,21 @@ def parse_arguments():
             if 'name_servers' not in arguments:
                 arguments['name_servers'] = []
 
-            suboptions = False
+            arguments['name_servers'].append({})
+            argument = getopt.argument(False, r'(?ix) ^ [a-z0-9\.\-\*\?]+ $')
+
+            if argument is not None:
+                arguments['name_servers'][-1]['hostname'] = argument
 
             while True:
-                option = getopt.option(('name', 'ip4', 'ip6'))
+                option = getopt.option(('ipv4', 'ipv6'))
 
                 if option is None:
                     break
 
-                if not suboptions:
-                    arguments['name_servers'].append({})
-                    suboptions = True
-                
-                # we should probably use the ipaddress module instead of a regexp for ip addresses
-                if option == 'name':
-                    arguments['name_servers'][-1]['hostname'] = getopt.argument(True, r'(?ix) ^ [a-z0-9\.\-\*\?]+ $')
-                elif option == 'ip4':
+                if option == 'ipv4':
                     arguments['name_servers'][-1]['ipv4_address'] = getopt.argument(True, r'(?x) ^ [0-9]+ \. [0-9]+ \. [0-9]+ \. [0-9]+ $')
-                elif option == 'ip6':
+                elif option == 'ipv6':
                     arguments['name_servers'][-1]['ipv6_address'] = getopt.argument(True, r'(?ix) ^ (?: [a-f0-9]{0,4} :){1,7} [a-f0-9]{1,4} $')
 
         elif option == 'no-nameservers':
@@ -334,22 +341,20 @@ def parse_arguments():
             if 'dnssec_keys' not in arguments:
                 arguments['dnssec_keys'] = []
 
-            suboptions = False
+            arguments['dnssec_keys'].append({})
+            argument = getopt.argument(False, r'(?x) ^ [0-9]+ $')
+
+            if argument is not None:
+                arguments['dnssec_keys'][-1]['key_tag'] = int(argument)
 
             while True:
-                option = getopt.option(('digest', 'tag', 'algorithm', 'type'))
+                option = getopt.option(('digest', 'algorithm', 'type'))
 
                 if option is None:
                     break
 
-                if not suboptions:
-                    arguments['dnssec_keys'].append({})
-                    suboptions = True
-
                 if option == 'digest':
                     arguments['dnssec_keys'][-1]['digest'] = getopt.argument(True, r'(?ix) ^ [a-f0-9]+ $').upper()
-                elif option == 'tag':
-                    arguments['dnssec_keys'][-1]['key_tag'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
                 elif option == 'algorithm':
                     arguments['dnssec_keys'][-1]['algorithm'] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
                 elif option == 'type':
@@ -494,17 +499,13 @@ def parse_arguments():
             if 'access_controls' not in arguments:
                 arguments['access_controls'] = []
 
-            suboptions = False
+            arguments['access_controls'].append({})
                 
             while True:
                 option = getopt.option(('domain', 'registrar-id', 'ip', 'comment', 'effective'))
 
                 if option is None:
                     break
-
-                if not suboptions:
-                    arguments['access_controls'].append({})
-                    suboptions = True
 
                 if option == 'domain':
                     argument = getopt.argument(True)
@@ -526,7 +527,7 @@ def parse_arguments():
                     match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
 
                     if match is None:
-                        raise ArgumentError('Invalid effective date: {}'.format(option, argument))
+                        raise ArgumentError('Invalid --effective date: {}'.format(option, argument))
 
                     arguments['access_controls'][-1]['effective'] = {}
 
@@ -620,7 +621,7 @@ def check_arguments(action, arguments):
             raise ArgumentError('No --handle contact specified')
 
         if 'handle_id' not in arguments['handle']:
-            raise ArgumentError('No --handle-id specified')
+            raise ArgumentError('No --handle id specified')
 
     if action == 'udai-valid-query':
         if 'udai' not in arguments:
@@ -686,15 +687,15 @@ def check_arguments(action, arguments):
         if 'name_servers' in arguments:
             for index in range(0, len(arguments['name_servers'])):
                 if 'hostname' not in arguments['name_servers'][index]:
-                    raise ArgumentError('No nameserver {} --name specified'.format(index + 1))
+                    raise ArgumentError('No --nameserver {} hostname specified'.format(index + 1))
 
         if 'dnssec_keys' in arguments:
             for index in range(0, len(arguments['dnssec_keys'])):
+                if 'key_tag' not in arguments['dnssec_keys'][index]:
+                    raise ArgumentError('No --dnssec {} tag specified'.format(index + 1))
+
                 if 'digest' not in arguments['dnssec_keys'][index]:
                     raise ArgumentError('No dnssec {} --digest specified'.format(index + 1))
-
-                if 'key_tag' not in arguments['dnssec_keys'][index]:
-                    raise ArgumentError('No dnssec {} --tag specified'.format(index + 1))
 
                 if 'algorithm' not in arguments['dnssec_keys'][index]:
                     raise ArgumentError('No dnssec {} --algorithm specified'.format(index + 1))

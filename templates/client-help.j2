@@ -44,6 +44,9 @@ Phone and fax numbers are specified in the format:
   COUNTRY-AREA-LOCAL
   COUNTRY-LOCAL
 
+Handle IDs must be between 3 and 16 characters and only contain alphanumeric, underscore,
+dot, dash and space.
+
 Version is specified in the format:
 
   MAJOR.MINOR
@@ -105,8 +108,8 @@ sxc domain-create --registrar-id ID --domain NAME --term NUMBER --registrant OPT
   --delegate                       Include domain in DNS
   --ref TEXT                       Optional customer reference
    
-  --registrant {--handle-id ID | --name NAME --email EMAIL --address1 TEXT --city TEXT --country TEXT --phone PHONE [OPTIONS]}
-    --handle-id ID                 Handle ID of registrant contact
+  --registrant {ID | --name NAME --email EMAIL --address1 TEXT --city TEXT --country TEXT --phone PHONE [OPTIONS]}
+      ID                           Handle ID of registrant contact
     --name NAME                    Name of registrant contact
     --email EMAIL                  Email address of registrant contact
     --privacy                      Enable privacy option
@@ -122,14 +125,14 @@ sxc domain-create --registrar-id ID --domain NAME --term NUMBER --registrant OPT
   --admin OPTIONS                  Admin contact, see --registrant
   --technical OPTIONS              Techinical contact, see --registrant
   
-  --nameserver --name HOSTNAME [OPTIONS]
-    --name HOSTNAME                Hostname of name server
+  --nameserver HOSTNAME [OPTIONS]
+      HOSTNAME                     Hostname of name server
     --ip4 ADDRESS                  IPv4 address, used only for glue records
     --ip6 ADDRESS                  IPv6 address, used only for glue records
     
-  --dnssec --digest DIGEST --tag NUMBER --type NUMBER --algorithm
+  --dnssec TAG --digest DIGEST --type NUMBER --algorithm NUMBER
+      TAG                          Key tag
     --digest DIGEST                Hexdigest of key
-    --tag NUMBER                   Tag identifying the key
     --type NUMBER                  Digest type
     --algorithm NUMBER             Key algorithm
 
@@ -164,8 +167,8 @@ sxc domain-update --registrar-id ID --domain NAME [OPTIONS]
   --ref TEXT                       Optional customer reference
   --no-ref                         Remove customer reference
    
-  --registrant {--handle-id ID | --name NAME --email EMAIL --address1 TEXT --city TEXT --country TEXT --phone PHONE [OPTIONS]}
-    --handle-id ID                 Handle ID of registrant contact
+  --registrant {ID | --name NAME --email EMAIL --address1 TEXT --city TEXT --country TEXT --phone PHONE [OPTIONS]}
+      ID                           Handle ID of registrant contact
     --name NAME                    Name of registrant contact
     --email EMAIL                  Email address of registrant contact
     --privacy                      Enable privacy option
@@ -188,15 +191,15 @@ sxc domain-update --registrar-id ID --domain NAME [OPTIONS]
   --technical OPTIONS              Techinical contact, see --registrant
   --no-technical                   Remove technical contact
    
-  --nameserver --name HOSTNAME [OPTIONS]
-    --name HOSTNAME                Hostname of name server
+  --nameserver HOSTNAME [OPTIONS]
+      HOSTNAME                     Hostname of name server
     --ip4 ADDRESS                  IPv4 address, used only for glue records
     --ip6 ADDRESS                  IPv6 address, used only for glue records
   --no-nameservers                 Delete all name servers for domain
     
-  --dnssec --digest DIGEST --tag NUMBER --type NUMBER --algorithm
+  --dnssec TAG --digest DIGEST --type NUMBER --algorithm NUMBER
+      TAG                          Key tag
     --digest DIGEST                Hexdigest of key
-    --tag NUMBER                   Tag identifying the key
     --type NUMBER                  Digest type
     --algorithm NUMBER             Key algorithm
   --no-dnssec                      Delete all DNSSEC keys for domain
@@ -245,8 +248,7 @@ sxc domain-details-query --registrar-id ID --domain NAME [OPTIONS]
     dnssec                         Return DNSSEC records
     audit                          Return audit text
     
-  --registrant {--handle-id ID|OPTIONS}
-    --handle-id ID                 Match handle ID
+  --registrant [OPTIONS]
     --name NAME                    Match registrant contact name
     --email EMAIL                  Match email address
     --privacy                      Only contacts with privacy enabled
@@ -263,16 +265,16 @@ sxc domain-details-query --registrar-id ID --domain NAME [OPTIONS]
   --admin OPTIONS                  Admin contact, see --registrant
   --technical OPTIONS              Technical contact, see --registrant
   
-  --nameserver OPTIONS
-    --name HOSTNAME                Match hostname
+  --nameserver [HOSTNAME] OPTIONS
+      HOSTNAME                     Match hostname
     --ip4 ADDRESS                  Match IPv4 address
     --ip6 ADDRESS                  Match IPv6 address
     
-  --dnssec OPTIONS
+  --dnssec [TAG] OPTIONS
+      TAG                          Match key tag
     --digest DIGEST                Match digest
-    --tag NUMBER                   Match key tag
     --type NUMBER                  Match digest type
-    --algorithm NUMBER             match key algorithm
+    --algorithm NUMBER             Match key algorithm
 
   --registered-from DATE           Only return domains registered after this date
   --registered-to DATE             Only return domains registered before this date
@@ -297,8 +299,8 @@ sxc handle-create --registrar-id ID --handle OPTIONS [OPTIONS]
   --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the registrar to get the handle
 
-  --handle --handle-id ID --name NAME --email EMAIL --address1 TEXT --city TEXT --country CODE --phone PHONE [OPTIONS]
-    --handle-id ID                 ID for handle being created
+  --handle ID --name NAME --email EMAIL --address1 TEXT --city TEXT --country CODE --phone PHONE [OPTIONS]
+      ID                           ID for handle being created
     --name NAME                    Name of contact
     --email EMAIL                  Email address of contact
     --privacy                      Enable privacy option
@@ -322,8 +324,8 @@ sxc handle-update --registrar-id ID --handle OPTIONS [OPTIONS]
   --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the registrar to get the handle
 
-  --handle --handle-id ID --name NAME --email EMAIL [OPTIONS]
-    --handle-id ID                 ID for handle being updated
+  --handle ID --name NAME --email EMAIL [OPTIONS]
+      ID                           ID for handle being updated
     --name NAME                    Name of contact
     --email EMAIL                  Email address of contact
     --privacy                      Enable privacy option
@@ -356,8 +358,8 @@ sxc handle-details-query --registrar-id ID [OPTIONS]
   --max NUMBER                     Maximum number of results
   --skip NUMBER                    Number of results to skip
   --count                          Return count of results
-  --handle [OPTIONS]
-    --handle-id ID                 Match handle ID
+  --handle [ID]* [OPTIONS]
+      ID                           Match handle ID
     --name NAME                    Match name
     --email EMAIL                  Match email
     --privacy                      Only handles with privacy enabled
@@ -460,7 +462,6 @@ sxc registrar-create --registrar-id ID --target-registrar-id ID --registrar NAME
   --accref TEXT                    Accounting reference
 
   --public --name NAME --email EMAIL --address1 TEXT --city TEXT --country CODE --phone PHONE [OPTIONS]
-    --handle-id ID                 Handle ID of public contact
     --name NAME                    Name of public contact
     --email EMAIL                  Email address of public contact
     --privacy                      Enable privacy option
@@ -513,8 +514,8 @@ sxc registrar-update --registrar-id ID [OPTIONS]
   --website URL                    Website of the registrar
   --accref TEXT                    Accounting reference
 
-  --public --name NAME --email EMAIL --address1 TEXT --city TEXT --country CODE --phone PHONE [OPTIONS]
-    --handle-id ID                 Handle ID of public contact
+  --public {ID | --name NAME --email EMAIL --address1 TEXT --city TEXT --country CODE --phone PHONE [OPTIONS]}
+      ID                           Handle ID of public contact
     --name NAME                    Name of public contact
     --email EMAIL                  Email address of public contact
     --privacy                      Enable privacy option
@@ -623,8 +624,8 @@ sxc access-control-list-remove --registrar-id ID --resource NAME {--whitelist | 
 
   --registrar-id ID                ID of your registrar
   --resource NAME                  Name of the resource
-  --whitelist                      Add to whitelist
-  --blacklist                      Add to blacklist
+  --whitelist                      Remove from whitelist
+  --blacklist                      Remove from blacklist
   --brief                          Only return brief results
 
   --entry [OPTIONS]
@@ -652,9 +653,9 @@ sxc access-control-list-query --registrar-id ID [OPTIONS]
   --full                           Return full result
 
   --entry [OPTIONS]
-    --ip ADDRESS                   Match IP address
     --domain NAME                  Match domain name
-    --registrar-id ID              Match registrar ID
+    --registrar-id ID              Match registrar ID    
+    --ip ADDRESS                   Match IP address
 
 {% elif billed_until_adjustment %}
 Adjust the billed-until date for a domain.

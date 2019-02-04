@@ -3,7 +3,9 @@
                     {% if skip_results is defined %} SkipResults="{{ skip_results }}" {% endif %}
                     {% if count_results %} CountResults="{{ count_results | int }}" {% endif %}>
     {% if handle %}
-      {% if handle.handle_id %} <HandleIdFilter>{{ handle.handle_id }}</HandleIdFilter> {% endif %}
+      {% for handle_id in handle.handle_ids %}
+        <HandleIdFilter>{{ handle_id }}</HandleIdFilter>
+      {% endfor %}
     {% endif %}
     {% if search_from or search_to %}
       <SearchDateRange>
@@ -26,24 +28,26 @@
       </ChangedInDateRange>
     {% endif %}
     {% if handle %}
-      <ContactFilter {% if handle.name %} Name="{{ handle.name }}" {% endif %}
-                     {% if handle.email_address %} Email="{{ handle.email_address }}" {% endif %}
-                     {% if handle.privacy is defined %} Privacy="{{ handle.privacy | int }}" {% endif %}>
-        {% if handle.postal_address1 or handle.postal_address2 or handle.postal_city or handle.postal_province or handle.postal_country or handle.postal_code %}
-          <PostalAddressFilter {% if handle.postal_address1 %} Address1="{{ handle.postal_address1 }}" {% endif %}
-                               {% if handle.postal_address2 %} Address2="{{ handle.postal_address2 }}" {% endif %}
-                               {% if handle.postal_city %} City="{{ handle.postal_city }}" {% endif %}
-                               {% if handle.postal_province %} Province="{{ handle.postal_province }}" {% endif %}
-                               {% if handle.postal_country %} CountryCode="{{ handle.postal_country }}" {% endif %}
-                               {% if handle.postal_code %} PostalCode="{{ handle.postal_code }}" {% endif %}/>
-        {% endif %}
-        {% if handle.phone %}
-          <Phone CountryCode="{{ handle.phone.country_code }}" AreaCode="{{ handle.phone.area_code }}" LocalNumber="{{ handle.phone.local_number }}"/>
-        {% endif %} 
-        {% if handle.fax %}
-          <Fax CountryCode="{{ handle.fax.country_code }}" AreaCode="{{ handle.fax.area_code }}" LocalNumber="{{ handle.fax.local_number }}"/>
-        {% endif %}
-      </ContactFilter>
+      {% if handle.name or handle.email or handle.email_address or handle.privacy is defined or handle.postal_address1 or handle.postal_address2 or handle.postal_city or handle.postal_province or handle.postal_country or handle.postal_code or handle.phone or handle.fax %}
+        <ContactFilter {% if handle.name %} Name="{{ handle.name }}" {% endif %}
+                       {% if handle.email_address %} Email="{{ handle.email_address }}" {% endif %}
+                       {% if handle.privacy is defined %} Privacy="{{ handle.privacy | int }}" {% endif %}>
+          {% if handle.postal_address1 or handle.postal_address2 or handle.postal_city or handle.postal_province or handle.postal_country or handle.postal_code %}
+            <PostalAddressFilter {% if handle.postal_address1 %} Address1="{{ handle.postal_address1 }}" {% endif %}
+                                 {% if handle.postal_address2 %} Address2="{{ handle.postal_address2 }}" {% endif %}
+                                 {% if handle.postal_city %} City="{{ handle.postal_city }}" {% endif %}
+                                 {% if handle.postal_province %} Province="{{ handle.postal_province }}" {% endif %}
+                                 {% if handle.postal_country %} CountryCode="{{ handle.postal_country }}" {% endif %}
+                                 {% if handle.postal_code %} PostalCode="{{ handle.postal_code }}" {% endif %}/>
+          {% endif %}
+          {% if handle.phone %}
+            <Phone CountryCode="{{ handle.phone.country_code }}" AreaCode="{{ handle.phone.area_code }}" LocalNumber="{{ handle.phone.local_number }}"/>
+          {% endif %}
+          {% if handle.fax %}
+            <Fax CountryCode="{{ handle.fax.country_code }}" AreaCode="{{ handle.fax.area_code }}" LocalNumber="{{ handle.fax.local_number }}"/>
+          {% endif %}
+        </ContactFilter>
+      {% endif %}
     {% endif %}
   </HandleDetailsQry>
 </NZSRSRequest>
