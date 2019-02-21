@@ -100,15 +100,15 @@
         {% endif %}
       </RegisteredDateRange>
     {% endif %}
-    {% if billed_from or billed_to %}
-      <BilledUntilDateRange>
-        {% if billed_from %}
-          <From Year="{{ billed_from.year }}" Month="{{ billed_from.month }}" Day="{{ billed_from.day }}" Hour="{{ billed_from.hour }}" Minute="{{ billed_from.minute }}" Second="{{ billed_from.second }}" {% if billed_from.time_zone %} TimeZoneOffset="{{ billed_from.time_zone }}" {% endif %}/>
+    {% if locked_from or locked_to %}
+      <LockedDateRange>
+        {% if locked_from %}
+          <From Year="{{ locked_from.year }}" Month="{{ locked_from.month }}" Day="{{ locked_from.day }}" Hour="{{ locked_from.hour }}" Minute="{{ locked_from.minute }}" Second="{{ locked_from.second }}" {% if locked_from.time_zone %} TimeZoneOffset="{{ locked_from.time_zone }}" {% endif %}/>
         {% endif %}
-        {% if billed_to %}
-          <To Year="{{ billed_to.year }}" Month="{{ billed_to.month }}" Day="{{ billed_to.day }}" Hour="{{ billed_to.hour }}" Minute="{{ billed_to.minute }}" Second="{{ billed_to.second }}" {% if billed_to.time_zone %} TimeZoneOffset="{{ billed_to.time_zone }}" {% endif %}/>
+        {% if locked_to %}
+          <To Year="{{ locked_to.year }}" Month="{{ locked_to.month }}" Day="{{ locked_to.day }}" Hour="{{ locked_to.hour }}" Minute="{{ locked_to.minute }}" Second="{{ locked_to.second }}" {% if locked_to.time_zone %} TimeZoneOffset="{{ locked_to.time_zone }}" {% endif %}/>
         {% endif %}
-      </BilledUntilDateRange>
+      </LockedDateRange>
     {% endif %}
     {% if cancelled_from or cancelled_to %}
       <CancelledDateRange>
@@ -120,16 +120,17 @@
         {% endif %}
       </CancelledDateRange>
     {% endif %}
-    {% if locked_from or locked_to %}
-      <LockedDateRange>
-        {% if locked_from %}
-          <From Year="{{ locked_from.year }}" Month="{{ locked_from.month }}" Day="{{ locked_from.day }}" Hour="{{ locked_from.hour }}" Minute="{{ locked_from.minute }}" Second="{{ locked_from.second }}" {% if locked_from.time_zone %} TimeZoneOffset="{{ locked_from.time_zone }}" {% endif %}/>
+    {% if billed_from or billed_to %}
+      <BilledUntilDateRange>
+        {% if billed_from %}
+          <From Year="{{ billed_from.year }}" Month="{{ billed_from.month }}" Day="{{ billed_from.day }}" Hour="{{ billed_from.hour }}" Minute="{{ billed_from.minute }}" Second="{{ billed_from.second }}" {% if billed_from.time_zone %} TimeZoneOffset="{{ billed_from.time_zone }}" {% endif %}/>
         {% endif %}
-        {% if locked_to %}
-          <To Year="{{ locked_to.year }}" Month="{{ locked_to.month }}" Day="{{ locked_to.day }}" Hour="{{ locked_to.hour }}" Minute="{{ locked_to.minute }}" Second="{{ locked_to.second }}" {% if locked_to.time_zone %} TimeZoneOffset="{{ locked_to.time_zone }}" {% endif %}/>
+        {% if billed_to %}
+          <To Year="{{ billed_to.year }}" Month="{{ billed_to.month }}" Day="{{ billed_to.day }}" Hour="{{ billed_to.hour }}" Minute="{{ billed_to.minute }}" Second="{{ billed_to.second }}" {% if billed_to.time_zone %} TimeZoneOffset="{{ billed_to.time_zone }}" {% endif %}/>
         {% endif %}
-      </LockedDateRange>
+      </BilledUntilDateRange>
     {% endif %}
+    {% if audit_text %} <AuditTextFilter>{{ audit_text }}</AuditTextFilter> {% endif %}
     {% if action_id %} <ActionIdFilter>{{ action_id }}</ActionIdFilter> {% endif %}
     {% if fields %}
       <FieldList {% if fields.registrar_id %} RegistrarId="{{ fields.registrar_id | int }}" {% endif %}

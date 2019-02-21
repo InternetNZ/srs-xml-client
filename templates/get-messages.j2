@@ -16,8 +16,8 @@
         {% endif %}
       </TransDateRange>
     {% endif %}
+    {% if audit_text %} <AuditTextFilter>{{ audit_text }}</AuditTextFilter> {% endif %}
     {% if third_party %} <TypeFilter Type="third-party" /> {% endif %}
     {% if server_generated %} <TypeFilter Type="server-generated-data" /> {% endif %}
-    {% if audit_text %} <AuditTextFilter>{{ audit_text }}</AuditTextFilter> {% endif %}
   </GetMessages>
 </NZSRSRequest>

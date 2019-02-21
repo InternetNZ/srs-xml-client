@@ -364,7 +364,7 @@ def parse_arguments():
             arguments['no_dnssec_keys'] = True
 
         # dates
-        elif option in ('transaction-from', 'transaction-to', 'registered-from', 'registered-to', 'billed-until', 'billed-from', 'billed-to', 'cancelled-from', 'cancelled-to', 'results-from', 'results-to', 'search-from', 'search-to', 'changed-from', 'changed-to', 'invoice-from', 'invoice-to', 'first-run', 'last-run', 'final-run', 'active-on', 'logged', 'logged-from', 'logged-to', 'effective', 'transaction', 'period-start', 'period-end'):
+        elif option in ('transaction-from', 'transaction-to', 'registered-from', 'registered-to', 'billed-until', 'billed-from', 'billed-to', 'cancelled-from', 'cancelled-to', 'locked-from', 'locked-to', 'results-from', 'results-to', 'search-from', 'search-to', 'changed-from', 'changed-to', 'invoice-from', 'invoice-to', 'first-run', 'last-run', 'final-run', 'active-on', 'logged', 'logged-from', 'logged-to', 'effective', 'transaction', 'period-start', 'period-end'):
             date = re.sub(r'-', '_', option)
             argument = getopt.argument(True)
         
