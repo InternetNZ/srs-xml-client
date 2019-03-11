@@ -42,7 +42,7 @@ import traceback
 
 PARENT_DIR = os.path.dirname(sys.argv[0])
 
-REGISTRY_KEY = 'registry/srs-pgp-key.asc'
+REGISTRY_KEY = 'registry/srs-production-key.asc'
 REGISTRY_CERTIFICATE = 'registry/srs-root-ca.pem'
 
 VERSION_MAJOR = '8'

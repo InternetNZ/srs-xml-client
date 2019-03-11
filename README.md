@@ -35,7 +35,7 @@ The following environment variables can be used:
   `https://srstest.srs.net.nz/srs/registrar`, used when `--url` is not
   specified.
 
-* `REGISTRY_CERTIFICATE` SSL CA certificate that authenticates the HTTPS
+* `REGISTRY_CERTIFICATE` SSL CA certificate that authenticates the SSL 
   connection, used when `--certificate` is not specified.
 
 * `REGISTRY_KEY` The PGP key used to verify responses from the registry,
@@ -46,6 +46,24 @@ The following environment variables can be used:
 
 * `REGISTRAR_KEY` The PGP key to use when signing the request, used when
   `--sign` is not specifed.
+
+KEYS
+----
+
+The following keys are in the `registry/` directory:
+
+* `srs-production-key.asc` The PGP key that is currently being used by both
+  the Production and Test environments. It will no longer be in use after
+  the 18th of June 2019.
+
+* `srs-production-key-20190618.asc` The new PGP public key for the Production
+  environment. It will go into use on the 18th of June 2019.
+
+* `registry/srs-test-key-20190520.asc` The new PGP public key for the Test
+  environment. It will go into use on the 20th of May 2019.
+
+* `srs-root-ca.pem` The SSL CA certificate used to authenticate the SSL
+  connection.
 
 USAGE
 -----
@@ -169,11 +187,3 @@ sxc registrar-account-query
   --transaction-from "1/8/2018 00:00:00"
   --transaction-to "31/8/2018 23:59:59"
 ```
-
-TODO
-----
-
-* Add an output filter that converts XML to something more readable
-  YAML-like syntax?
-
-* Add XML syntax highlighting.
