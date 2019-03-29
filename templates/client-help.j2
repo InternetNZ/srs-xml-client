@@ -22,6 +22,7 @@ Global options are:
 
   --registrar-id ID                ID of your registrar
   --sign FILE                      File containing the registrar PGP key
+  --password PASSWORD              Password for decrypting the registrar PGP key
   --url URL                        URL of the .nz Shared Registry System
   --certificate FILE               File containing the registry SSL certificate
   --verify FILE                    File containing the registry PGP key
@@ -39,6 +40,11 @@ Dates may be specified in multiple formats:
   DAY/MONTH/YEAR HOUR:MINUTE:SECOND
   DAY/MONTH/YEAR HOUR:MINUTE:SECOND TIMEZONE
 
+Time zone is in the format:
+
+  +HOUR
+  -HOUR
+
 Phone and fax numbers are specified in the format:
 
   COUNTRY-AREA-LOCAL
@@ -55,6 +61,7 @@ Environment variables that are the defaults for options are:
 
   REGISTRAR_ID                     --registrar-id
   REGISTRAR_KEY                    --sign
+  REGISTRAR_KEY_PASSWORD           --password
   REGISTRY_URL                     --url
   REGISTRY_CERTIFICATE             --certificate
   REGISTRY_KEY                     --verify
@@ -496,10 +503,11 @@ sxc registrar-create --registrar-id ID --target-registrar-id ID --registrar NAME
     query-acl                      Can query all ACLs
     query-registrar-acl            Can query ACLs for registrar
     query-all-domains              Can query all domains
+    whois                          Can query whois details
 
   --pgp FILE [FILE]*               Files containing a PGP public key
   --2lds NAME [NAME]*              List of allowed second level domains
-  --password TEXT                  EPP authentication password
+  --epp-password TEXT              EPP authentication password
 
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
@@ -554,13 +562,14 @@ sxc registrar-update --registrar-id ID [OPTIONS]
     query-acl                      Can query all ACLs
     query-registrar-acl            Can query ACLs for registrar
     query-all-domains              Can query all domains
+    whois                          Can query whois details
 
   --pgp FILE [FILE]*               Files containing a PGP public key
   --no-pgp                         Delete all PGP public keys
   --2ld NAME [NAME]*               List of allowed second level domains
   --no-2lds                        Delete all allowed second level domains
-  --password TEXT                  EPP authentication password
-  --no-password                    Clear EPP authentication password
+  --epp-password TEXT              EPP authentication password
+  --no-epp-password                Clear EPP authentication password
 
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference

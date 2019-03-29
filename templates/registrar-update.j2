@@ -72,7 +72,7 @@
     {% elif no_pgp_keys %}
       <EncryptKeys />
     {% endif %}
-    {% if password or no_password %} <EPPAuth Password="{{ password }}" /> {% endif %}
+    {% if epp_password or no_epp_password %} <EPPAuth Password="{{ epp_password }}" /> {% endif %}
     {% if allowed_2lds %}
       <Allowed2LDs>
         {% for allowed_2ld in allowed_2lds %}

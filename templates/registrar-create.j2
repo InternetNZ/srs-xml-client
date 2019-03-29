@@ -44,7 +44,7 @@
         {% endfor %}
       </EncryptKeys>
     {% endif %}
-    {% if password %} <EPPAuth Password="{{ password }}" /> {% endif %}
+    {% if epp_password %} <EPPAuth Password="{{ epp_password }}" /> {% endif %}
     {% if allowed_2lds %}
       <Allowed2LDs>
         {% for allowed_2ld in allowed_2lds %}

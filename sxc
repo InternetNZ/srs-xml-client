@@ -31,12 +31,14 @@
 import sys
 import os
 import re
+import types
 import uuid
 import jinja2
 from lxml import etree
 import pgpy
-import requests
+import requests as http_request
 from urllib.parse import parse_qsl
+from getpass import getpass
 import traceback
 
 
@@ -58,8 +60,8 @@ class InternalError(Exception):
 
 
 class GetOptions():
-    def __init__(self, arguments, program = None):
-        self.last_option = program or 'first'
+    def __init__(self, arguments):
+        self.last_option = None
         self.arguments = arguments
 
     def option(self, allowed = None):
@@ -89,22 +91,28 @@ class GetOptions():
 
         if argument is None or argument[0:2] == '--':
             if required:
-                raise ArgumentError('Option --{} requires an argument'.format(self.last_option))
+                if self.last_option:
+                    raise ArgumentError('Option --{} requires an argument'.format(self.last_option))
+
+                raise ArgumentError('An argument is required')
 
             return None
 
         if pattern and not re.search(pattern, argument):
-            raise ArgumentError('Invalid --{} argument: {}'.format(self.last_option, argument))
+            if self.last_option:
+                raise ArgumentError('Invalid --{} argument: {}'.format(self.last_option, argument))
+
+            raise ArgumentError('Invalid first argument')
 
         self.arguments.pop(0)
-        
+
         return argument
 
 
 def parse_arguments():
     arguments = {'version_major': VERSION_MAJOR, 'version_minor': VERSION_MINOR}
 
-    getopt = GetOptions(sys.argv[1:], program = os.path.basename(sys.argv[0]))
+    getopt = GetOptions(sys.argv[1:])
     action = getopt.argument(False)
 
     if action not in ('domain-create', 'domain-update', 'domain-details-query', 'handle-create', 'handle-update', 'handle-details-query', 'whois', 'udai-valid-query', 'action-details-query', 'get-messages', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'registrar-account-query', 'registrar-details-query', 'access-control-list-add', 'access-control-list-remove', 'access-control-list-query', 'billing-amount-query', 'billing-amount-update', 'adjust-registrar-account', 'billed-until-adjustment', 'deferred-income-summary-query', 'deferred-income-detail-query', 'sys-params-create', 'sys-params-update', 'sys-params-query', 'schedule-create', 'schedule-update', 'schedule-cancel', 'schedule-query', 'run-log-create', 'run-log-query', 'send-xml', 'help', 'version'):
@@ -132,6 +140,8 @@ def parse_arguments():
             arguments['registry_certificate'] = getopt.argument(True)
         elif option == 'sign':
             arguments['registrar_key'] = getopt.argument(True)
+        elif option == 'password':
+            arguments['registrar_key_password'] = getopt.argument(True)
         elif option == 'verify':
             arguments['registry_key'] = getopt.argument(True)
         elif option == 'dry-run':
@@ -163,7 +173,7 @@ def parse_arguments():
                 # idna
                 if re.search(r'(?ix) [āēīōū]', argument):
                     arguments['domain_name_unicode'] = argument
-                    arguments['domain_name'] = str(argument.encode('idna'), 'utf-8')
+                    arguments['domain_name'] = argument.encode('idna').decode('utf-8')
                 else:
                     if 'domain_name_unicode' in arguments:
                         del arguments['domain_name_unicode']
@@ -368,7 +378,7 @@ def parse_arguments():
             date = re.sub(r'-', '_', option)
             argument = getopt.argument(True)
         
-            match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
+            match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: \  (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?: \ ? (?P<time_zone> [\+\-] [0-9]+)?)?)? $', argument)
 
             if match is None:
                 raise ArgumentError('Invalid --{} date: {}'.format(option, argument))
@@ -383,7 +393,7 @@ def parse_arguments():
             arguments[date]['minute'] = int(match.group('minute')) if match.group('minute') else 0
             arguments[date]['second'] = int(match.group('second')) if match.group('second') else 0
 
-            arguments[date]['time_zone'] = match.group('time_zone')
+            arguments[date]['time_zone'] = match.group('time_zone') + ':00' if match.group('time_zone') else ''
 
         # registrar
         elif option == 'registrar':
@@ -392,10 +402,10 @@ def parse_arguments():
             arguments['website'] = getopt.argument(True)
         elif option == 'accref':
             arguments['account_ref'] = getopt.argument(True)
-        elif option == 'password':
-            arguments['password'] = getopt.argument(True)
-        elif option == 'no-password':
-            arguments['no_password'] = True
+        elif option == 'epp-password':
+            arguments['epp_password'] = getopt.argument(True)
+        elif option == 'no-epp-password':
+            arguments['no_epp_password'] = True
 
         # roles
         elif option == 'roles':
@@ -444,8 +454,11 @@ def parse_arguments():
                 if argument is None:
                     break
 
-                with open(argument, 'r') as file:
-                    arguments['pgp_keys'].append(file.read())
+                try:
+                    with open(argument, 'r') as file:
+                        arguments['pgp_keys'].append(file.read())
+                except (PermissionError, FileNotFoundError) as error:
+                    raise InternalError(error.strerror + ': ' + error.filename)
 
                 required = False
 
@@ -512,7 +525,7 @@ def parse_arguments():
 
                     # domain is also used for epp client acls so we only do IDN if it looks like a domain
                     if re.search(r'(?ix) [āēīōū]+', argument):
-                        argument = str(argument.encode('idna'), 'utf-8')
+                        argument = argument.encode('idna').decode('utf-8')
 
                     arguments['access_controls'][-1]['domain_name'] = argument
                 elif option == 'registrar-id':
@@ -524,7 +537,7 @@ def parse_arguments():
                     arguments['access_controls'][-1]['comment'] = getopt.argument(True)
                 elif option == 'effective':
                     argument = getopt.argument(True)
-                    match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: [ ] (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?P<time_zone> [ ]? [\+\-] [0-9]+ : [0-9]+)?)? $', argument)
+                    match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: \  (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?: \ ? (?P<time_zone> [\+\-] [0-9]+)?)?)? $', argument)
 
                     if match is None:
                         raise ArgumentError('Invalid --effective date: {}'.format(option, argument))
@@ -539,13 +552,13 @@ def parse_arguments():
                     arguments['access_controls'][-1]['effective']['minute'] = int(match.group('minute')) if match.group('minute') else 0
                     arguments['access_controls'][-1]['effective']['second'] = int(match.group('second')) if match.group('second') else 0
 
-                    arguments['access_controls'][-1]['effective']['time_zone'] = match.group('time_zone')
+                    arguments['access_controls'][-1]['effective']['time_zone'] = match.group('time_zone') + ':00' if match.group('time_zone') else ''
 
         # scheduled jobs
         elif option == 'process':
             arguments['process_name'] = getopt.argument(True)
         elif option == 'frequency':
-            arguments['frequency'] = getopt.argument(True, r'(?ix) ^ [0-9]+ [ ] (?: minute | hour | day | month | year) s? $')
+            arguments['frequency'] = getopt.argument(True, r'(?ix) ^ [0-9]+ \  (?: minute | hour | day | month | year) s? $')
         elif option == 'parameters':
             arguments['parameters'] = getopt.argument(True)
         elif option in ('success', 'failure'):
@@ -604,6 +617,9 @@ def check_arguments(action, arguments):
 
             if arguments['registrar_key'] is None:
                 raise ArgumentError('No --sign specified')
+
+        if 'registrar_key_password' not in arguments:
+            arguments['registrar_key_password'] = os.environ.get('REGISTRAR_KEY_PASSWORD')
 
     if action in ('domain-create', 'domain-update', 'udai-valid-query', 'whois', 'adjust-registrar-account', 'billed-until-adjustment'):
         if 'domain_name' not in arguments:
@@ -772,23 +788,48 @@ def check_arguments(action, arguments):
             raise ArgumentError('No --logged date specified')
 
 
-def send_request(registry_url, registry_certificate, registry_key, registrar_id, registrar_key, content, timeout):
-    with open(registrar_key, 'r') as file:
-        signing_key = pgpy.PGPKey()
-        signing_key.parse(file.read())
+def send_request(options, content):
+    try:
+        with open(options.registry_key, 'r') as file:
+            verifying_key = pgpy.PGPKey()
+            verifying_key.parse(file.read())
 
-    signature = str(signing_key.sign(content))
+    except (PermissionError, FileNotFoundError) as error:
+        raise InternalError(error.strerror + ': ' + error.filename)
 
-    response = requests.post(registry_url, verify = registry_certificate, headers = {'User-Agent': 'sxc/0.4'}, data = {'n': registrar_id, 'r': content, 's': signature}, timeout = timeout)
-    response.raise_for_status()
+    if not verifying_key.is_unlocked:
+        raise InternalError('An unecrypted public key is required for --verify')
 
-    if response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
-        raise InternalError('Wrong content type: {}'.format(response.headers['Content-Type']))
+    try:
+        with open(options.registrar_key, 'r') as file:
+            signing_key = pgpy.PGPKey()
+            signing_key.parse(file.read())
+    except (PermissionError, FileNotFoundError) as error:
+        raise InternalError(error.strerror + ': ' + error.filename)
+
+    if signing_key.is_unlocked:
+        signature = str(signing_key.sign(content))
+    else:
+        if options.registrar_key_password is not None:
+            password = options.registrar_key_password
+        else:
+            password = getpass('Enter password for ' + options.registrar_key + ': ')
+
+        try:
+            with signing_key.unlock(password):
+                signature = str(signing_key.sign(content))
+        except pgpy.errors.PGPDecryptionError:
+            raise InternalError('Incorrect password')
+
+    http_response = http_request.post(options.registry_url, verify = options.registry_certificate, headers = {'User-Agent': 'sxc/0.5'}, data = {'n': options.registrar_id, 'r': content, 's': signature}, timeout = options.timeout)
+
+    if http_response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
+        raise InternalError('Wrong content type: {}'.format(http_response.headers['Content-Type']))
 
     content = None
     signature = None
 
-    for key, value in parse_qsl(response.text, strict_parsing = True, encoding = 'utf-8'):
+    for key, value in parse_qsl(http_response.text, strict_parsing = True, encoding = 'utf-8'):
         if key == 'r':
             content = value
         elif key == 's':
@@ -796,18 +837,16 @@ def send_request(registry_url, registry_certificate, registry_key, registrar_id,
             signature.parse(value)
 
     if not content:
-        raise InternalError('No \'r\' parameter in response: {}'.format(response.text))
+        raise InternalError('No \'r\' parameter in response: {}'.format(http_response.text))
 
     # some protocol errors do not have a signature
     if signature is not None:
-        with open(registry_key, 'r') as file:
-            verifying_key = pgpy.PGPKey()
-            verifying_key.parse(file.read())
-
-        if not verifying_key.verify(content, signature):
+        try:
+            verifying_key.verify(content, signature)
+        except pgpy.errors.PGPError:
             raise InternalError('Invalid signature from registry')
 
-    return bytes(content, 'utf-8')
+    return etree.fromstring(content.encode())
 
 
 def main():
@@ -815,17 +854,19 @@ def main():
 
     if action == 'help':
         template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), trim_blocks = True).get_template('client-help.j2')
-        content = template.render(arguments)
+        print(template.render(arguments), end = '')
 
-        print(content, end = '')
         return
 
     check_arguments(action, arguments)
 
     if action == 'send-xml':
         if 'file' in arguments:
-            with open(arguments['file'], 'r') as file:
-                content = file.read()
+            try:
+                with open(arguments['file'], 'r') as file:
+                    content = file.read()
+            except (PermissionError, FileNotFoundError) as error:
+                raise InternalError(error.strerror + ': ' + error.filename)
         else:
             content = sys.stdin.read()
 
@@ -840,23 +881,25 @@ def main():
     xml_document = etree.fromstring(content)
 
     if 'dry_run' in arguments:
-        print(str(etree.tostring(xml_document, pretty_print = True), 'utf-8'), end = '')
+        print(etree.tostring(xml_document, pretty_print = True).decode('utf-8'), end = '')
         return
 
-    content = str(etree.tostring(xml_document, pretty_print = False), 'utf-8')
+    options = types.SimpleNamespace()
 
-    registry_url = arguments['registry_url']
-    registry_certificate = arguments['registry_certificate']
-    registry_key = arguments['registry_key']
+    options.registry_url = arguments['registry_url']
+    options.registry_certificate = arguments['registry_certificate']
+    options.registry_key = arguments['registry_key']
 
-    registrar_id = arguments['registrar_id']
-    registrar_key = arguments['registrar_key']
-    timeout = arguments['timeout'] if 'timeout' in arguments else 300
+    options.registrar_id = arguments['registrar_id']
+    options.registrar_key = arguments['registrar_key']
+    options.registrar_key_password = arguments['registrar_key_password']
 
-    content = send_request(registry_url, registry_certificate, registry_key, registrar_id, registrar_key, content, timeout)
-    xml_document = etree.fromstring(content)
+    options.timeout = arguments['timeout'] if 'timeout' in arguments else 300
 
-    print(str(etree.tostring(xml_document, pretty_print = True), 'utf-8'), end = '')
+    content = etree.tostring(xml_document, pretty_print = False).decode('utf-8')
+    xml_document = send_request(options, content)
+
+    print(etree.tostring(xml_document, pretty_print = True).decode('utf-8'), end = '')
 
 
 if __name__ == '__main__':
