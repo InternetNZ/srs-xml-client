@@ -57,6 +57,14 @@ Version is specified in the format:
 
   MAJOR.MINOR
 
+Period for schedules is in the format:
+
+  NUMBER minute
+  NUMBER hour
+  NUMBER day
+  NUMBER month
+  NUMBER year
+
 Environment variables that are the defaults for options are:
 
   REGISTRAR_ID                     --registrar-id
@@ -793,8 +801,8 @@ sxc schedule-update --registrar-id ID --process NAME --first-run DATE [OPTIONS]
   --parameters TEXT                Optional additional parameters
   --cancel                         Perform a schedule-cancel action instead
 
-  --first-run DATE                 Run job from this date
-  --last-run DATE                  Run job until this date
+  --first-run DATE                 First run date for this job
+  --last-run DATE                  Last run date for this job
 
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
