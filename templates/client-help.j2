@@ -305,6 +305,7 @@ sxc domain-details-query --registrar-id ID --domain NAME [OPTIONS]
 
   --action-id ID                   Match action ID
   --audit TEXT                     Match audit text
+  --query-id ID                    Assign an ID for this query
 
 {% elif handle_create %}
 Create a contact handle.
@@ -394,6 +395,8 @@ sxc handle-details-query --registrar-id ID [OPTIONS]
   --search-from                    Only search handles existing after date
   --search-to                      Only return handles existing before this date
 
+  --query-id ID                    Assign an ID for this query
+
 {% elif udai_valid_query %}
 Check whether a UDAI is valid for a domain
 
@@ -402,6 +405,7 @@ sxc udai-valid-query --registrar-id ID --domain NAME --udai UDAI
   --registrar-id ID                ID of your registrar
   --domain NAME                    Domain name
   --udai UDAI                      UDAI for domain
+  --query-id ID                    Assign an ID for this query
 
 {% elif whois %}
 Whois details for a domain.
@@ -412,6 +416,7 @@ sxc whois --registrar-id ID --domain NAME [OPTIONS]
   --domain NAME                    Domain name
   --brief                          Only return brief results
   --source-ip ADDRESS              Source IP address for rate-limiting
+  --query-id ID                    Assign an ID for this query
 
 {% elif get_messages %}
 Get events that have occured for this registrar.
@@ -436,6 +441,7 @@ sxc get-messages --registrar-id ID [OPTIONS]
 
   --action-id ID                   Match action ID
   --audit TEXT                     Match audit text 
+  --query-id ID                    Assign an ID for this query
 
 {% elif ack_message %}
 Acknowledge a message in the queue.
@@ -446,7 +452,7 @@ sxc ack-message --registrar-id ID --transaction-id ID
   --target-registrar-id ID         ID of the registrar to ack messages for
   --originating-registrar-id ID    ID of the originating registrar
   --transaction-id ID              Transaction ID for that action
-  --action-id ID                   Action ID
+  --action-id ID                   Unique ID for this action
 
 {% elif reset_msgq %}
 Mark all messages as acknowledged.
@@ -465,6 +471,7 @@ sxc action-details-query --registrar-id ID --action-id ID [OPTIONS]
   --target-registrar-id ID         ID of the registrar being queried
   --originating-registrar-id ID    ID of originating registrar
   --action-id ID                   ID of the action to show details for
+  --query-id ID                    Assign an ID for this query
 
 {% elif registrar_create %}
 Create a registrar.
@@ -592,6 +599,7 @@ sxc registrar-details-query --registrar-id ID [OPTONS]
   --registrar NAME                 Name of registrar
   --results-from DATE              Only return history results after this date
   --results-to DATE                Only return history reults before this date
+  --query-id ID                    Assign an ID for this query
 
 {% elif registrar_account_query %}
 Query details about billing for a registrar's account.
@@ -613,6 +621,8 @@ sxc registrar-account-query --registrar-id ID [OPTIONS]
   --transaction-to DATE            Only return transactions before this date
   --invoice-from DATE              Only return invoices after this date
   --invoice-to DATE                Only return invoices before this date
+
+  --query-id ID                    Assign an ID for this query
 
 {% elif access_control_list_add %}
 Add entries to the access control list.
@@ -675,6 +685,8 @@ sxc access-control-list-query --registrar-id ID [OPTIONS]
     --registrar-id ID              Match registrar ID    
     --ip ADDRESS                   Match IP address
 
+  --query-id ID                    Assign an ID for this query
+
 {% elif billed_until_adjustment %}
 Adjust the billed-until date for a domain.
 
@@ -720,6 +732,7 @@ Query details about the domain term billing amount.
 sxc --registrar-id ID billing-amount-query
 
   --registrar-id ID                ID of your registrar
+  --query-id ID                    Assign an ID for this query
 
 {% elif deferred_income_detail_query %}
 Query details abount deferred income.
@@ -731,6 +744,7 @@ sxc deferred-income-detail-query --registrar-id ID --base-month NUMBER --base-ye
   --base-year NUMBER               Only transactions that occured before this year
   --income-month NUMBER            Month the Transactions occurred
   --income-year NUMBER             Year the transactions occurred
+  --query-id ID                    Assign an ID for this query
 
 {% elif deferred_income_summary_query %}
 Get a summary of deferred income.
@@ -742,6 +756,7 @@ sxc deferred-income-summary-query --registrar-id ID --base-month NUMBER --base-y
   --base-year NUMBER               Only transactions that occured before this year
   --income-month NUMBER            Month the transactions occurred
   --income-year NUMBER             Year the transactions occurred
+  --query-id ID                    Assign an ID for this query
 
 {% elif sys_params_create %}
 Create a system parameter.
@@ -754,6 +769,7 @@ sxc sys-params-create --registrar-id ID --name TEXT --value TEXT [OPTIONS]
 
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
+  --query-id ID                    Assign an ID for this query
 
 {% elif sys_params_update %}
 Update a system parameter.
@@ -831,6 +847,7 @@ sxc schedule-query --registrar-id ID [OPTIONS]
   --parameters TEXT                Parameters for scheduled job
   --first-run DATE                 Only return jobs that first ran on this date
   --active-on DATE                 Only return jobs that were still active on this date
+  --query-id ID                    Assign an ID for this query
 
 {% elif run_log_create %}
 Create a run log for a scheduled job.
@@ -857,6 +874,7 @@ sxc run-log-query --registrar-id ID [OPTIONS]
   --parameters TEXT                Process parameters
   --logged-from DATE               Only return logs after this date
   --logged-to DATE                 Only return logs before this date
+  --query-id ID                    Assign an ID for this query
 
 {% elif send_xml %}
 Send a raw XML request, will use stdin if no input file is specified.
