@@ -1,5 +1,6 @@
 <NZSRSRequest VerMajor="{{ version_major }}" VerMinor="{{ version_minor }}" {% if target_registrar_id %} RegistrarId="{{ target_registrar_id }}" {% endif %}>
-  <HandleDetailsQry {% if max_results is defined %} MaxResults="{{ max_results }}" {% endif %}
+  <HandleDetailsQry {% if query_id %} QryId="{{ query_id }}" {% endif %}
+                    {% if max_results is defined %} MaxResults="{{ max_results }}" {% endif %}
                     {% if skip_results is defined %} SkipResults="{{ skip_results }}" {% endif %}
                     {% if count_results %} CountResults="{{ count_results | int }}" {% endif %}>
     {% if handle %}

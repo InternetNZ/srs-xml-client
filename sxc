@@ -155,7 +155,7 @@ def parse_arguments():
         elif option in ('registrar-id', 'originating-registrar-id', 'recipient-registrar-id', 'target-registrar-id', 'invoice-id'):
             id = re.sub(r'-', '_', option)
             arguments[id] = int(getopt.argument(True, r'(?x) ^ [0-9]+ $'))
-        elif option in ('transaction-id', 'action-id'):
+        elif option in ('transaction-id', 'action-id', 'query-id'):
             id = re.sub(r'-', '_', option)
             arguments[id] = getopt.argument(True)
 
