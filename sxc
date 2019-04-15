@@ -798,7 +798,7 @@ def send_request(options, content):
         raise InternalError(error.strerror + ': ' + error.filename)
 
     if not verifying_key.is_unlocked:
-        raise InternalError('An unecrypted public key is required for --verify')
+        raise InternalError('An unencrypted public key is required for --verify')
 
     try:
         with open(options.registrar_key, 'r') as file:
@@ -813,7 +813,10 @@ def send_request(options, content):
         if options.registrar_key_password is not None:
             password = options.registrar_key_password
         else:
-            password = getpass('Enter password for ' + options.registrar_key + ': ')
+            try:
+                password = getpass('Enter password for ' + options.registrar_key + ': ')
+            except EOFError:
+                raise InternalError('No password specified')
 
         try:
             with signing_key.unlock(password):
