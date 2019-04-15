@@ -47,6 +47,9 @@ The following environment variables can be used:
 * `REGISTRAR_KEY` The PGP key to use when signing the request, used when
   `--sign` is not specifed.
 
+* `REGISTRAR_KEY_PASSWORD` The password to decrypt the PGP key if
+  `--password` is not specified.
+
 KEYS
 ----
 
