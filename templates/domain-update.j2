@@ -20,7 +20,8 @@
       {% if registrant.handle_id %}
         <RegistrantContact HandleId="{{ registrant.handle_id }}" />
       {% else %}
-        <RegistrantContact Name="{{ registrant.name }}" Email="{{ registrant.email_address }}"
+        <RegistrantContact {% if registrant.name %} Name="{{ registrant.name }}" {% endif %}
+                           {% if registrant.email_address %} Email="{{ registrant.email_address }}" {% endif %}
                            {% if registrant.privacy is defined %} Privacy="{{ registrant.privacy | int }}" {% endif %}>
           {% if registrant.postal_address1 or registrant.postal_city or registrant.postal_country %}
             <PostalAddress Address1="{{ registrant.postal_address1 }}"
@@ -45,7 +46,8 @@
       {% if admin.handle_id %}
         <AdminContact HandleId="{{ admin.handle_id }}" />
       {% else %}
-        <AdminContact Name="{{ admin.name }}" Email="{{ admin.email_address }}"
+        <AdminContact {% if admin.name %} Name="{{ admin.name }}" {% endif %}
+                      {% if admin.email_address %} Email="{{ admin.email_address }}" {% endif %}
                       {% if admin.privacy is defined %} Privacy="{{ admin.privacy | int }}" {% endif %}>
           {% if admin.postal_address1 or admin.postal_city or admin.postal_country %}
             <PostalAddress Address1="{{ admin.postal_address1 }}"
@@ -72,7 +74,8 @@
       {% if technical.handle_id %}
         <TechnicalContact HandleId="{{ technical.handle_id }}" />
       {% else %}
-        <TechnicalContact Name="{{ technical.name }}" Email="{{ technical.email_address }}"
+        <TechnicalContact {% if technical.name %} Name="{{ technical.name }}" {% endif %}
+                          {% if technical.email_address %} Email="{{ technical.email_address }}" {% endif %}
                           {% if technical.privacy is defined %} Privacy="{{ technical.privacy | int }}" {% endif %}>
           {% if technical.postal_address1 or technical.postal_city or technical.postal_country %}
             <PostalAddress Address1="{{ technical.postal_address1 }}"

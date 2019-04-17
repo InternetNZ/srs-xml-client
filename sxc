@@ -679,11 +679,15 @@ def check_arguments(action, arguments):
             if action in ('domain-create', 'domain-update') and 'handle_id' in arguments[contact]:
                 continue
 
-            if 'name' not in arguments[contact]:
-                raise ArgumentError('No {} --name specified'.format(contact))
+            if action in ('domain-create', 'handle-create', 'registrar-create'):
+                if 'name' not in arguments[contact]:
+                    raise ArgumentError('No {} --name specified'.format(contact))
 
-            if 'email_address' not in arguments[contact]:
-                raise ArgumentError('No {} --email specified'.format(contact))
+                if 'email_address' not in arguments[contact]:
+                    raise ArgumentError('No {} --email specified'.format(contact))
+
+                if 'phone' not in arguments[contact]:
+                    raise ArgumentError('No {} --phone specified'.format(contact))
 
             # if any postal address is specified or this is a create action
             if 'postal_address1' in arguments[contact] or 'postal_address2' in arguments[contact] or 'no_postal_address2' in arguments[contact] or 'postal_city' in arguments[contact] or 'postal_province' in arguments[contact] or 'no_postal_province' in arguments[contact] or 'postal_country' in arguments[contact] or 'postal_code' in arguments or 'no_postal_code' in arguments[contact] or action in ('domain-create', 'handle-create', 'registrar-create'):
@@ -695,9 +699,6 @@ def check_arguments(action, arguments):
 
                 if 'postal_country' not in arguments[contact]:
                     raise ArgumentError('No {} --country specified'.format(contact))
-
-            if 'phone' not in arguments[contact] and action in ('domain-create', 'handle-create', 'registrar-create'):
-                raise ArgumentError('No {} --phone specified'.format(contact))
 
     if action in ('domain-create', 'domain-update'):
         if 'name_servers' in arguments:
