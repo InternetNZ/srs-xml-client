@@ -113,10 +113,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 {% elif domain_create %}
 Create (register) a domain name.
 
-sxc domain-create --registrar-id ID --domain NAME --term NUMBER --registrant OPTIONS [OPTIONS]
+sxc domain-create --domain NAME --term NUMBER --registrant OPTIONS [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
-  --target-registrar-id ID         ID of the registrar to get the domain
+  --target-registrar-id ID         ID of the registrar to register the domain for
 
   --domain NAME                    Domain name to create
   --term NUMBER                    Billing term (months)
@@ -157,10 +156,9 @@ sxc domain-create --registrar-id ID --domain NAME --term NUMBER --registrant OPT
 {% elif domain_update %}
 Update the details domain name including transferring or cancelling.
 
-sxc domain-update --registrar-id ID --domain NAME [OPTIONS]
+sxc domain-update --domain NAME [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
-  --target-registrar-ID            ID of the registrar to get the domain
+  --target-registrar-ID            ID of the registrar to update the domain on
 
   --domain NAME                    Domain name to update
   --term NUMBER                    New billing term (months)
@@ -225,9 +223,8 @@ sxc domain-update --registrar-id ID --domain NAME [OPTIONS]
 {% elif domain_details_query %}
 Query details about a domain including history.
 
-sxc domain-details-query --registrar-id ID --domain NAME [OPTIONS]
+sxc domain-details-query --domain NAME [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the registrar being queried
 
   --domain NAME                    Domain name to query
@@ -310,10 +307,9 @@ sxc domain-details-query --registrar-id ID --domain NAME [OPTIONS]
 {% elif handle_create %}
 Create a contact handle.
 
-sxc handle-create --registrar-id ID --handle OPTIONS [OPTIONS]
+sxc handle-create --handle OPTIONS [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
-  --target-registrar-id ID         ID of the registrar to get the handle
+  --target-registrar-id ID         ID of the registrar to create the handle for
 
   --handle ID --name NAME --email EMAIL --address1 TEXT --city TEXT --country CODE --phone PHONE [OPTIONS]
       ID                           ID for handle being created
@@ -335,10 +331,9 @@ sxc handle-create --registrar-id ID --handle OPTIONS [OPTIONS]
 {% elif handle_update %}
 Update or delete a contact handle.
 
-sxc handle-update --registrar-id ID --handle OPTIONS [OPTIONS]
+sxc handle-update --handle OPTIONS [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
-  --target-registrar-id ID         ID of the registrar to get the handle
+  --target-registrar-id ID         ID of the registrar to update the handle on
 
   --handle ID --name NAME --email EMAIL [OPTIONS]
       ID                           ID for handle being updated
@@ -367,13 +362,14 @@ sxc handle-update --registrar-id ID --handle OPTIONS [OPTIONS]
 {% elif handle_details_query %}
 Query details about a contact handle.
 
-sxc handle-details-query --registrar-id ID [OPTIONS]
+sxc handle-details-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-ID            ID of the registrar being queried
+
   --max NUMBER                     Maximum number of results
   --skip NUMBER                    Number of results to skip
   --count                          Return count of results
+
   --handle [ID]* [OPTIONS]
       ID                           Match handle ID
     --name NAME                    Match name
@@ -400,9 +396,8 @@ sxc handle-details-query --registrar-id ID [OPTIONS]
 {% elif udai_valid_query %}
 Check whether a UDAI is valid for a domain
 
-sxc udai-valid-query --registrar-id ID --domain NAME --udai UDAI
+sxc udai-valid-query --domain NAME --udai UDAI
 
-  --registrar-id ID                ID of your registrar
   --domain NAME                    Domain name
   --udai UDAI                      UDAI for domain
   --query-id ID                    Assign an ID for this query
@@ -410,9 +405,8 @@ sxc udai-valid-query --registrar-id ID --domain NAME --udai UDAI
 {% elif whois %}
 Whois details for a domain.
 
-sxc whois --registrar-id ID --domain NAME [OPTIONS]
+sxc whois --domain NAME [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --domain NAME                    Domain name
   --brief                          Only return brief results
   --source-ip ADDRESS              Source IP address for rate-limiting
@@ -421,12 +415,12 @@ sxc whois --registrar-id ID --domain NAME [OPTIONS]
 {% elif get_messages %}
 Get events that have occured for this registrar.
 
-sxc get-messages --registrar-id ID [OPTIONS]
+sxc get-messages [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the registrar to get messages for
   --originating-registrar-id ID    ID of the originating registrar
   --recipient-registrar-id ID      ID of the recipient registrar
+
   --max NUMBER                     Maximum number of returns to return
   --skip NUMBER                    Number of results to skip
   --count                          Return count of the number of results
@@ -446,9 +440,8 @@ sxc get-messages --registrar-id ID [OPTIONS]
 {% elif ack_message %}
 Acknowledge a message in the queue.
 
-sxc ack-message --registrar-id ID --transaction-id ID
+sxc ack-message --transaction-id ID [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the registrar to ack messages for
   --originating-registrar-id ID    ID of the originating registrar
   --transaction-id ID              Transaction ID for that action
@@ -457,17 +450,16 @@ sxc ack-message --registrar-id ID --transaction-id ID
 {% elif reset_msgq %}
 Mark all messages as acknowledged.
 
-sxc reset-msgq --registrar-id ID
+sxc reset-msgq [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
-  --action-id ID                   Optional action reference
+  --target-registrar-id ID         ID of the registrar to reset the message queue for
+  --action-id ID                   Unique ID for this action
 
 {% elif action_details_query %}
 Get the raw XML request and response for a previous action.
 
-sxc action-details-query --registrar-id ID --action-id ID [OPTIONS]
+sxc action-details-query --action-id ID [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the registrar being queried
   --originating-registrar-id ID    ID of originating registrar
   --action-id ID                   ID of the action to show details for
@@ -476,9 +468,8 @@ sxc action-details-query --registrar-id ID --action-id ID [OPTIONS]
 {% elif registrar_create %}
 Create a registrar.
 
-sxc registrar-create --registrar-id ID --target-registrar-id ID --registrar NAME --accref TEXT --public OPTIONS --private OPTIONS --technical OPTIONS [OPTIONS]
+sxc registrar-create --target-registrar-id ID --registrar NAME --accref TEXT --public OPTIONS --private OPTIONS --technical OPTIONS [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the the registrar being created
   --registrar NAME                 Name of the registrar
   --website URL                    Website of the registrar
@@ -530,9 +521,8 @@ sxc registrar-create --registrar-id ID --target-registrar-id ID --registrar NAME
 {% elif registrar_update %}
 Update a registrar.
 
-sxc registrar-update --registrar-id ID [OPTIONS]
+sxc registrar-update [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of the the registrar being updated
   --registrar NAME                 Name of the registrar
   --website URL                    Website of the registrar
@@ -592,9 +582,8 @@ sxc registrar-update --registrar-id ID [OPTIONS]
 {% elif registrar_details_query %}
 Query details about a registrar including history.
 
-sxc registrar-details-query --registrar-id ID [OPTONS]
+sxc registrar-details-query [OPTONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of registrar being queried
   --registrar NAME                 Name of registrar
   --results-from DATE              Only return history results after this date
@@ -604,9 +593,8 @@ sxc registrar-details-query --registrar-id ID [OPTONS]
 {% elif registrar_account_query %}
 Query details about billing for a registrar's account.
 
-sxc registrar-account-query --registrar-id ID [OPTIONS]
+sxc registrar-account-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-id ID         ID of registrar being queried
   --domain NAME                    Domain name that was billed
   --ref TEXT                       Optional customer reference
@@ -627,9 +615,8 @@ sxc registrar-account-query --registrar-id ID [OPTIONS]
 {% elif access_control_list_add %}
 Add entries to the access control list.
 
-sxc access-control-list-add --registrar-id ID --resource NAME {--whitelist | --blacklist} [OPTIONS]
+sxc access-control-list-add --resource NAME {--whitelist | --blacklist} [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --resource NAME                  Name of the resource
   --whitelist                      Add to whitelist
   --blacklist                      Add to blacklist
@@ -648,9 +635,8 @@ sxc access-control-list-add --registrar-id ID --resource NAME {--whitelist | --b
 {% elif access_control_list_remove %}
 Remove entries from the access control list.
 
-sxc access-control-list-remove --registrar-id ID --resource NAME {--whitelist | --blacklist} [OPTIONS]
+sxc access-control-list-remove --resource NAME {--whitelist | --blacklist} [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --resource NAME                  Name of the resource
   --whitelist                      Remove from whitelist
   --blacklist                      Remove from blacklist
@@ -668,9 +654,8 @@ sxc access-control-list-remove --registrar-id ID --resource NAME {--whitelist | 
 {% elif access_control_list_query %}
 Query the access control list.
 
-sxc access-control-list-query --registrar-id ID [OPTIONS]
+sxc access-control-list-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --resource NAME                  Name for resource
   --whitelist                      Entries from whitelist
   --blacklist                      Entries from blacklist
@@ -690,9 +675,8 @@ sxc access-control-list-query --registrar-id ID [OPTIONS]
 {% elif billed_until_adjustment %}
 Adjust the billed-until date for a domain.
 
-sxc billed-until-adjustment --registrar-id ID --domain NAME --billed-until DATE [OPTIONS]
+sxc billed-until-adjustment --domain NAME --billed-until DATE [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --target-registrar-ID            ID of the target registrar that has the domain
   --domain NAME                    Domain name being updated
   --billed-until DATE              New billed-until date
@@ -702,9 +686,8 @@ sxc billed-until-adjustment --registrar-id ID --domain NAME --billed-until DATE 
 {% elif adjust_registrar_account %}
 Adjust the billing of a domain.
 
-sxc adjust-registrar-account --registrar-id ID --domain NAME --months NUMBER {--credit | --debit} --transaction DATE --period-start DATE --period-end DATE [OPTIONS]
+sxc adjust-registrar-account --domain NAME --months NUMBER {--credit | --debit} --transaction DATE --period-start DATE --period-end DATE [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --domain-name NAME               Domain name being billed
   --months NUMBER                  Number of months being billed
   --credit                         Apply as a credit
@@ -718,9 +701,8 @@ sxc adjust-registrar-account --registrar-id ID --domain NAME --months NUMBER {--
 {% elif billing_amount_update %}
 Update the domain term billing amount.
 
-sxc billing-amount-update --registrar-id ID --amount DOLLARS [OPTIONS]
+sxc billing-amount-update --amount DOLLARS [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --amount DOLLARS                 New billing amount
   --effective DATE                 Amount is only effective from this date
 
@@ -729,17 +711,15 @@ sxc billing-amount-update --registrar-id ID --amount DOLLARS [OPTIONS]
 {% elif billing_amount_query %}
 Query details about the domain term billing amount.
 
-sxc --registrar-id ID billing-amount-query
+sxc billing-amount-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --query-id ID                    Assign an ID for this query
 
 {% elif deferred_income_detail_query %}
 Query details abount deferred income.
 
-sxc deferred-income-detail-query --registrar-id ID --base-month NUMBER --base-year NUMBER --income-month NUMBER --income-year NUMBER
+sxc deferred-income-detail-query --base-month NUMBER --base-year NUMBER --income-month NUMBER --income-year NUMBER
 
-  --registrar-id ID                ID of your registrar
   --base-month NUMBER              Only transactions that occurred before this month
   --base-year NUMBER               Only transactions that occured before this year
   --income-month NUMBER            Month the Transactions occurred
@@ -749,9 +729,8 @@ sxc deferred-income-detail-query --registrar-id ID --base-month NUMBER --base-ye
 {% elif deferred_income_summary_query %}
 Get a summary of deferred income.
 
-sxc deferred-income-summary-query --registrar-id ID --base-month NUMBER --base-year NUMBER --income-month NUMBER --income-year NUMBER
+sxc deferred-income-summary-query --base-month NUMBER --base-year NUMBER --income-month NUMBER --income-year NUMBER
 
-  --registrar-id ID                ID of your registrar
   --base-month NUMBER              Only transactions that occurred before this month
   --base-year NUMBER               Only transactions that occured before this year
   --income-month NUMBER            Month the transactions occurred
@@ -761,9 +740,8 @@ sxc deferred-income-summary-query --registrar-id ID --base-month NUMBER --base-y
 {% elif sys_params_create %}
 Create a system parameter.
 
-sxc sys-params-create --registrar-id ID --name TEXT --value TEXT [OPTIONS]
+sxc sys-params-create --name TEXT --value TEXT [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --name TEXT                      Name of parameter
   --value TEXT                     Value for parameter
 
@@ -774,9 +752,8 @@ sxc sys-params-create --registrar-id ID --name TEXT --value TEXT [OPTIONS]
 {% elif sys_params_update %}
 Update a system parameter.
 
-sxc sys-params-update --registrar-id ID --name TEXT --value TEXT [OPTIONS]
+sxc sys-params-update --name TEXT --value TEXT [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --name TEXT                      Name of parameter
   --value TEXT                     Value for parameter
 
@@ -786,16 +763,15 @@ sxc sys-params-update --registrar-id ID --name TEXT --value TEXT [OPTIONS]
 {% elif sys_params_query %}
 Get a list of system parameters.
 
-sxc sys-params-query --registrar-id ID
+sxc sys-params-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
+  --query-id ID                    Assign an ID for this query
 
 {% elif schedule_create %}
 Create a scheduled job.
 
-sxc schedule-create --registrar-id ID --process NAME --frequency PERIOD --first-run DATE [OPTIONS]
+sxc schedule-create --process NAME --frequency PERIOD --first-run DATE [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --process NAME                   Name of scheduled job
   --frequency PERIOD               Run frequency
   --parameters TEXT                Optional additional parameters
@@ -809,9 +785,8 @@ sxc schedule-create --registrar-id ID --process NAME --frequency PERIOD --first-
 {% elif schedule_update %}
 Update a scheduled job.
 
-sxc schedule-update --registrar-id ID --process NAME --first-run DATE [OPTIONS]
+sxc schedule-update --process NAME --first-run DATE [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --process NAME                   Name of scheduled job
   --frequency PERIOD               Run frequency
   --parameters TEXT                Optional additional parameters
@@ -826,9 +801,8 @@ sxc schedule-update --registrar-id ID --process NAME --first-run DATE [OPTIONS]
 {% elif schedule_cancel %}
 Cancel a scheduled job.
 
-sxc schedule-cancel --registrar-id ID --process NAME --first-run DATE [OPTIONS]
+sxc schedule-cancel --process NAME --first-run DATE [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --process NAME                   Name of scheduled job
   --parameters TEXT                Parameters for scheduled job
 
@@ -840,9 +814,8 @@ sxc schedule-cancel --registrar-id ID --process NAME --first-run DATE [OPTIONS]
 {% elif schedule_query %}
 Query details about scheduled jobs.
 
-sxc schedule-query --registrar-id ID [OPTIONS]
+sxc schedule-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --process NAME                   Name of scheduled job
   --parameters TEXT                Parameters for scheduled job
   --first-run DATE                 Only return jobs that first ran on this date
@@ -852,9 +825,8 @@ sxc schedule-query --registrar-id ID [OPTIONS]
 {% elif run_log_create %}
 Create a run log for a scheduled job.
 
-sxc run-log-create --registrar-id ID --process NAME {--success | --failure} --first-run DATE --logged DATE
+sxc run-log-create --process NAME {--success | --failure} --first-run DATE --logged DATE
 
-  --registrar-id ID                ID of your registrar
   --process NAME                   Name of scheduled job
   --parameters TEXT                Parameters for scheduled job
   --success                        Job executed sucessfully
@@ -867,9 +839,8 @@ sxc run-log-create --registrar-id ID --process NAME {--success | --failure} --fi
 {% elif run_log_query %}
 Query the run logs.
 
-sxc run-log-query --registrar-id ID [OPTIONS]
+sxc run-log-query [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --process NAME                   Name of process
   --parameters TEXT                Process parameters
   --logged-from DATE               Only return logs after this date
@@ -879,9 +850,8 @@ sxc run-log-query --registrar-id ID [OPTIONS]
 {% elif send_xml %}
 Send a raw XML request, will use stdin if no input file is specified.
 
-sxc send-xml --registrar-id ID [OPTIONS]
+sxc send-xml [OPTIONS]
 
-  --registrar-id ID                ID of your registrar
   --file FILE                      File containing the XML
 
 {% else %}
