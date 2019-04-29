@@ -825,7 +825,7 @@ def send_request(options, content):
         except pgpy.errors.PGPDecryptionError:
             raise InternalError('Incorrect password')
 
-    http_response = http_request.post(options.registry_url, verify = options.registry_certificate, headers = {'User-Agent': 'sxc/0.5'}, data = {'n': options.registrar_id, 'r': content, 's': signature}, timeout = options.timeout)
+    http_response = http_request.post(options.registry_url, verify = options.registry_certificate, headers = {'User-Agent': 'sxc/0.6'}, data = {'n': options.registrar_id, 'r': content, 's': signature}, timeout = options.timeout)
 
     if http_response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
         raise InternalError('Wrong content type: {}'.format(http_response.headers['Content-Type']))

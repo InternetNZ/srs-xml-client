@@ -15,10 +15,10 @@
                          {% if public.postal_code or public.no_postal_code %} PostalCode="{{ public.postal_code }}" {% endif %}/>
         {% endif %}
         {% if public.phone %}
-          <Phone CountryCode="{{ public.phone.country_code }}" AreaCode="{{ public.phone.area_code }}" LocalNumber="{{ public.phone.local_number }}"/>
+          <Phone CountryCode="{{ public.phone.country_code }}" {% if public.phone.area_code %} AreaCode="{{ public.phone.area_code }}" {% endif %} LocalNumber="{{ public.phone.local_number }}"/>
         {% endif %} 
         {% if public.fax %}
-          <Fax CountryCode="{{ public.fax.country_code }}" AreaCode="{{ public.fax.area_code }}" LocalNumber="{{ public.fax.local_number }}"/>
+          <Fax CountryCode="{{ public.fax.country_code }}" {% if public.fax.area_code %} AreaCode="{{ public.fax.area_code }}" {% endif %} LocalNumber="{{ public.fax.local_number }}"/>
         {% elif public.no_fax %}
           <Fax />
         {% endif %}
@@ -36,10 +36,10 @@
                          {% if private.postal_code or private.no_postal_code %} PostalCode="{{ private.postal_code }}" {% endif %}/>
         {% endif %}
         {% if private.phone %}
-          <Phone CountryCode="{{ private.phone.country_code }}" AreaCode="{{ private.phone.area_code }}" LocalNumber="{{ private.phone.local_number }}"/>
+          <Phone CountryCode="{{ private.phone.country_code }}" {% if private.phone.area_code %} AreaCode="{{ private.phone.area_code }}" {% endif %} LocalNumber="{{ private.phone.local_number }}"/>
         {% endif %} 
         {% if private.fax %}
-          <Fax CountryCode="{{ private.fax.country_code }}" AreaCode="{{ private.fax.area_code }}" LocalNumber="{{ private.fax.local_number }}"/>
+          <Fax CountryCode="{{ private.fax.country_code }}" {% if private.fax.area_code %} AreaCode="{{ private.fax.area_code }}" {% endif %} LocalNumber="{{ private.fax.local_number }}"/>
         {% elif private.no_fax %}
           <Fax />
         {% endif %}
@@ -57,10 +57,10 @@
                          {% if technical.postal_code or technical.no_postal_code %} PostalCode="{{ technical.postal_code }}" {% endif %}/>
         {% endif %}
         {% if technical.phone %}
-          <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
+          <Phone CountryCode="{{ technical.phone.country_code }}" {% if technical.phone.area_code %} AreaCode="{{ technical.phone.area_code }}" {% endif %} LocalNumber="{{ technical.phone.local_number }}"/>
         {% endif %} 
         {% if technical.fax %}
-          <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}"/>
+          <Fax CountryCode="{{ technical.fax.country_code }}" {% if technical.fax.area_code %} AreaCode="{{ technical.fax.area_code }}" {% endif %} LocalNumber="{{ technical.fax.local_number }}"/>
         {% elif technical.no_fax %}
           <Fax />
         {% endif %}

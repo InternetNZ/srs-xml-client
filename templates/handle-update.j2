@@ -13,10 +13,10 @@
                      {% if handle.postal_code or handle.no_postal_code %} PostalCode="{{ handle.postal_code }}" {% endif %}/>
     {% endif %}
     {% if handle.phone %}
-      <Phone CountryCode="{{ handle.phone.country_code }}" AreaCode="{{ handle.phone.area_code }}" LocalNumber="{{ handle.phone.local_number }}"/>
+      <Phone CountryCode="{{ handle.phone.country_code }}" {% if handle.phone.area_code %} AreaCode="{{ handle.phone.area_code }}" {% endif %} LocalNumber="{{ handle.phone.local_number }}"/>
     {% endif %} 
     {% if handle.fax %}
-      <Fax CountryCode="{{ handle.fax.country_code }}" AreaCode="{{ handle.fax.area_code }}" LocalNumber="{{ handle.fax.local_number }}"/>
+      <Fax CountryCode="{{ handle.fax.country_code }}" {% if handle.fax.area_code %} AreaCode="{{ handle.fax.area_code }}" {% endif %} LocalNumber="{{ handle.fax.local_number }}"/>
     {% elif handle.no_fax %}
       <Fax />
     {% endif %}
