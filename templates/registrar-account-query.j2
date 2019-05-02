@@ -3,7 +3,7 @@
                        {% if domain_name %} DomainName="{{ domain_name }}" {% endif %}
                        {% if registrant_ref %} RegistrantRef="{{ registrant_ref }}" {% endif %}
                        {% if invoice_id %} InvoiceId="{{ invoice_id }}" {% endif %}
-                       {% if pending %} TransStatus="PendingConfirmaton" {% elif confirmed %} TransStatus="Confirmed" {% endif %}
+                       {% if pending %} TransStatus="PendingConfirmation" {% elif confirmed %} TransStatus="Confirmed" {% endif %}
                        {% if max_results is defined %} MaxResults="{{ max_results }}" {% endif %}
                        {% if skip_results is defined %} SkipResults="{{ skip_results }}" {% endif %}
                        {% if count_results %} CountResults="{{ count_results | int }}" {% endif %}>
