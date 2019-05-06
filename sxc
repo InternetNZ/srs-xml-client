@@ -264,7 +264,7 @@ def parse_arguments():
             arguments[contact] = {}
 
             while True:
-                argument = getopt.argument(False, r'(?ix) ^ [a-z0-9_\-\*\?]{3,16} $')
+                argument = getopt.argument(False, r'(?ix) ^ [a-z0-9āēīōū_\-\*\?]{3,16} $')
 
                 if argument is None:
                     break
@@ -835,10 +835,10 @@ def send_request(options, content):
 
     for key, value in parse_qsl(http_response.text, strict_parsing = True, encoding = 'utf-8'):
         if key == 'r':
-            content = value
+            content = value.encode('utf-8')
         elif key == 's':
             signature = pgpy.PGPSignature()
-            signature.parse(value)
+            signature.parse(value.encode('utf-8'))
 
     if not content:
         raise InternalError('No \'r\' parameter in response: {}'.format(http_response.text))
@@ -850,7 +850,7 @@ def send_request(options, content):
         except pgpy.errors.PGPError:
             raise InternalError('Invalid signature from registry')
 
-    return etree.fromstring(content.encode())
+    return etree.fromstring(content)
 
 
 def main():
