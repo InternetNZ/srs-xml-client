@@ -62,8 +62,7 @@ The following keys are in the `registry/` directory:
 * `srs-production-key-20190618.asc` The new PGP public key for the Production
   environment. It will go into use on the 18th of June 2019.
 
-* `registry/srs-test-key-20190520.asc` The new PGP public key for the Test
-  environment. It will go into use on the 20th of May 2019.
+* `registry/srs-test-key.asc` The PGP public key for the Test environment.
 
 * `srs-root-ca.pem` The SSL CA certificate used to authenticate the SSL
   connection.
