@@ -156,11 +156,11 @@ sxc domain-create --domain NAME --term NUMBER --registrant OPTIONS [OPTIONS]
 {% elif domain_update %}
 Update the details domain name including transferring or cancelling.
 
-sxc domain-update --domain NAME [OPTIONS]
+sxc domain-update --domain NAME [NAME]* [OPTIONS]
 
   --target-registrar-ID            ID of the registrar to update the domain on
 
-  --domain NAME                    Domain name to update
+  --domain NAME [NAME]*            Domain names to update
   --term NUMBER                    New billing term (months)
   --udai UDAI                      UDAI, used to transfer the domain
   --new-udai                       Generate UDAI
@@ -223,11 +223,11 @@ sxc domain-update --domain NAME [OPTIONS]
 {% elif domain_details_query %}
 Query details about a domain including history.
 
-sxc domain-details-query --domain NAME [OPTIONS]
+sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
 
   --target-registrar-id ID         ID of the registrar being queried
 
-  --domain NAME                    Domain name to query
+  --domain NAME [NAME]*            Domain names to query
   --term NUMBER                    Query domains having this term
   --active                         Only active domains
   --pending                        Only pending-release domains
