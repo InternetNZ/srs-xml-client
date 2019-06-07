@@ -248,7 +248,7 @@ def parse_arguments():
                     arguments['fields']['audit_text'] = True
                 else:
                     raise ArgumentError('Unknown domain --fields: {}'.format(argument))
-                
+
         # search results
         elif option in ('full', 'brief'):
             arguments['full_result'] = option.startswith('full')
@@ -297,7 +297,7 @@ def parse_arguments():
                 elif option in ('phone', 'fax'):
                     number = option
                     arguments[contact][number] = {}
-                    
+
                     argument = getopt.argument(True)
                     match = re.search(r'(?ix) ^ \+? (?P<country_code> [0-9]+) (?: - (?P<area_code> [0-9]+))? - (?P<local_number> [0-9\-]+) $', argument)
 
@@ -377,18 +377,18 @@ def parse_arguments():
         elif option in ('transaction-from', 'transaction-to', 'registered-from', 'registered-to', 'billed-until', 'billed-from', 'billed-to', 'cancelled-from', 'cancelled-to', 'locked-from', 'locked-to', 'results-from', 'results-to', 'search-from', 'search-to', 'changed-from', 'changed-to', 'invoice-from', 'invoice-to', 'first-run', 'last-run', 'final-run', 'active-on', 'logged', 'logged-from', 'logged-to', 'effective', 'transaction', 'period-start', 'period-end'):
             date = re.sub(r'-', '_', option)
             argument = getopt.argument(True)
-        
+
             match = re.search(r'(?ix) ^ (?P<day> [0-9]+) / (?P<month> [0-9]+) / (?P<year> [0-9]+) (?: \  (?P<hour> [0-9]+) : (?P<minute> [0-9]+) (?: : (?P<second> [0-9]+))? (?: \ ? (?P<time_zone> [\+\-] [0-9]+)?)?)? $', argument)
 
             if match is None:
                 raise ArgumentError('Invalid --{} date: {}'.format(option, argument))
 
             arguments[date] = {}
-            
+
             arguments[date]['day'] = int(match.group('day'))
             arguments[date]['month'] = int(match.group('month'))
             arguments[date]['year'] = int(match.group('year'))
-            
+
             arguments[date]['hour'] = int(match.group('hour')) if match.group('hour') else 0
             arguments[date]['minute'] = int(match.group('minute')) if match.group('minute') else 0
             arguments[date]['second'] = int(match.group('second')) if match.group('second') else 0
@@ -422,10 +422,10 @@ def parse_arguments():
                     arguments['roles'][role] = True
                 else:
                     raise ArgumentError('Unknown registrar --roles: {}'.format(argument))
-                
+
         elif option == 'no-roles':
             arguments['no_roles'] = True
-               
+
         # allowed 2lds
         elif option == '2lds':
             arguments['allowed_2lds'] = []
@@ -447,7 +447,7 @@ def parse_arguments():
         elif option == 'pgp':
             arguments['pgp_keys'] = []
             required = True
-            
+
             while True:
                 argument = getopt.argument(required)
 
@@ -513,7 +513,7 @@ def parse_arguments():
                 arguments['access_controls'] = []
 
             arguments['access_controls'].append({})
-                
+
             while True:
                 option = getopt.option(('domain', 'registrar-id', 'ip', 'comment', 'effective'))
 
@@ -693,7 +693,7 @@ def check_arguments(action, arguments):
             if 'postal_address1' in arguments[contact] or 'postal_address2' in arguments[contact] or 'no_postal_address2' in arguments[contact] or 'postal_city' in arguments[contact] or 'postal_province' in arguments[contact] or 'no_postal_province' in arguments[contact] or 'postal_country' in arguments[contact] or 'postal_code' in arguments or 'no_postal_code' in arguments[contact] or action in ('domain-create', 'handle-create', 'registrar-create'):
                 if 'postal_address1' not in arguments[contact]:
                     raise ArgumentError('No {} --address1 specified'.format(contact))
-                
+
                 if 'postal_city' not in arguments[contact]:
                     raise ArgumentError('No {} --city specified'.format(contact))
 
