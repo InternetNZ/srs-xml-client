@@ -32,13 +32,16 @@ import sys
 import os
 import re
 import types
-import uuid
 import jinja2
 from lxml import etree
 import pgpy
 import requests as http_request
 from urllib.parse import parse_qsl
 from getpass import getpass
+import time
+import struct
+import random
+import binascii
 import traceback
 
 
@@ -877,7 +880,10 @@ def main():
     else:
         # auto-generate a timed-based action uuid for write actions
         if 'action_id' not in arguments and action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'sys-params-create', 'sys-params-update', 'access-control-list-add', 'access-control-list-remove', 'adjust-registrar-account', 'billed-until-adjustment', 'billing-amount-update', 'schedule-create', 'schedule-update', 'schedule-cancel', 'run-log-create'):
-            arguments['action_id'] = uuid.uuid1()
+            now = time.time()
+            seconds, microseconds = int(now), int((now - int(now)) * 100000)
+
+            arguments['action_id'] = binascii.hexlify(struct.pack('>II', seconds, (microseconds << 12) | random.randint(0, 2 << 12))).decode('utf-8')
 
         template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True).get_template(action + '.j2')
         content = re.sub(r'(?x) > [ \t\r\n]+ <', '><', template.render(arguments))
