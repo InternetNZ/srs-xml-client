@@ -881,9 +881,9 @@ def main():
         # auto-generate a timed-based action uuid for write actions
         if 'action_id' not in arguments and action in ('domain-create', 'domain-update', 'handle-create', 'handle-update', 'ack-message', 'reset-msgq', 'registrar-create', 'registrar-update', 'sys-params-create', 'sys-params-update', 'access-control-list-add', 'access-control-list-remove', 'adjust-registrar-account', 'billed-until-adjustment', 'billing-amount-update', 'schedule-create', 'schedule-update', 'schedule-cancel', 'run-log-create'):
             now = time.time()
-            seconds, microseconds = int(now), int((now - int(now)) * 100000)
+            seconds, microseconds = int(now), int((now - int(now)) * 1000000)
 
-            arguments['action_id'] = binascii.hexlify(struct.pack('>II', seconds, (microseconds << 12) | random.randint(0, 2 << 12))).decode('utf-8')
+            arguments['action_id'] = binascii.hexlify(struct.pack('>II', seconds, (microseconds << 12) | random.randrange(0, 2 << 12))).decode('utf-8')
 
         template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True).get_template(action + '.j2')
         content = re.sub(r'(?x) > [ \t\r\n]+ <', '><', template.render(arguments))
