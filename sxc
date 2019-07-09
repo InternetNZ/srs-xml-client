@@ -679,7 +679,7 @@ def check_arguments(action, arguments):
                 continue
 
             # handle is being assigned, no further options are required
-            if action in ('domain-create', 'domain-update') and 'handle_id' in arguments[contact]:
+            if action in ('domain-create', 'domain-update', 'registrar-update') and 'handle_id' in arguments[contact]:
                 continue
 
             if action in ('domain-create', 'handle-create', 'registrar-create'):
