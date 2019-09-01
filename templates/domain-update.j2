@@ -32,10 +32,10 @@
                            {% if registrant.postal_code or registrant.no_postal_code %} PostalCode="{{ registrant.postal_code }}" {% endif %}/>
           {% endif %}
           {% if registrant.phone %}
-            <Phone CountryCode="{{ registrant.phone.country_code }}" {% if registrant.phone.area_code %} AreaCode="{{ registrant.phone.area_code }}" {% endif %} LocalNumber="{{ registrant.phone.local_number }}"/>
+            <Phone CountryCode="{{ registrant.phone.country_code }}" AreaCode="{{ registrant.phone.area_code }}" LocalNumber="{{ registrant.phone.local_number }}"/>
           {% endif %} 
           {% if registrant.fax %}
-            <Fax CountryCode="{{ registrant.fax.country_code }}" {% if registrant.fax.area_code %} AreaCode="{{ registrant.fax.area_code }}" {% endif %} LocalNumber="{{ registrant.fax.local_number }}"/>
+            <Fax CountryCode="{{ registrant.fax.country_code }}" AreaCode="{{ registrant.fax.area_code }}" LocalNumber="{{ registrant.fax.local_number }}"/>
           {% elif registrant.no_fax %}
             <Fax />
           {% endif %}
@@ -58,10 +58,10 @@
                            {% if admin.postal_code or admin.no_postal_code %} PostalCode="{{ admin.postal_code }}" {% endif %}/>
           {% endif %}
           {% if admin.phone %}
-            <Phone CountryCode="{{ admin.phone.country_code }}" {% if admin.phone.area_code %} AreaCode="{{ admin.phone.area_code }}" {% endif %} LocalNumber="{{ admin.phone.local_number }}"/>
+            <Phone CountryCode="{{ admin.phone.country_code }}" AreaCode="{{ admin.phone.area_code }}" LocalNumber="{{ admin.phone.local_number }}"/>
           {% endif %} 
           {% if admin.fax %}
-            <Fax CountryCode="{{ admin.fax.country_code }}" {% if admin.fax.area_code %} AreaCode="{{ admin.fax.area_code }}" {% endif %} LocalNumber="{{ admin.fax.local_number }}"/>
+            <Fax CountryCode="{{ admin.fax.country_code }}" AreaCode="{{ admin.fax.area_code }}" LocalNumber="{{ admin.fax.local_number }}"/>
           {% elif admin.no_fax %}
             <Fax />
           {% endif %}
@@ -86,10 +86,10 @@
                            {% if technical.postal_code or technical.no_postal_code %} PostalCode="{{ technical.postal_code }}" {% endif %}/>
           {% endif %}
           {% if technical.phone %}
-            <Phone CountryCode="{{ technical.phone.country_code }}" {% if technical.phone.area_code %} AreaCode="{{ technical.phone.area_code }}" {% endif %} LocalNumber="{{ technical.phone.local_number }}"/>
+            <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
           {% endif %} 
           {% if technical.fax %}
-            <Fax CountryCode="{{ technical.fax.country_code }}" {% if technical.fax.area_code %} AreaCode="{{ technical.fax.area_code }}" {% endif %} LocalNumber="{{ technical.fax.local_number }}"/>
+            <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}"/>
           {% elif technical.no_fax %}
             <Fax />
           {% endif %}

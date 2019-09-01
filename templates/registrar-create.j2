@@ -8,9 +8,9 @@
                      {% if public.postal_province %} Province="{{ public.postal_province }}" {% endif %}
                      CountryCode="{{ public.postal_country }}"
                      {% if public.postal_code %} PostalCode="{{ public.postal_code }}" {% endif %}/>
-      <Phone CountryCode="{{ public.phone.country_code }}" {% if public.phone.area_code %} AreaCode="{{ public.phone.area_code }}" {% endif %} LocalNumber="{{ public.phone.local_number }}"/>
+      <Phone CountryCode="{{ public.phone.country_code }}" AreaCode="{{ public.phone.area_code }}" LocalNumber="{{ public.phone.local_number }}"/>
       {% if public.fax %}
-        <Fax CountryCode="{{ public.fax.country_code }}" {% if public.fax.area_code %} AreaCode="{{ public.fax.area_code }}" {% endif %} LocalNumber="{{ public.fax.local_number }}"/>
+        <Fax CountryCode="{{ public.fax.country_code }}" AreaCode="{{ public.fax.area_code }}" LocalNumber="{{ public.fax.local_number }}"/>
       {% endif %}
     </RegistrarPublicContact>
     <RegistrarSRSContact Name="{{ private.name }}" Email="{{ private.email_address }}">
@@ -20,9 +20,9 @@
                      {% if private.postal_province %} Province="{{ private.postal_province }}" {% endif %}
                      CountryCode="{{ private.postal_country }}"
                      {% if private.postal_code %} PostalCode="{{ private.postal_code }}" {% endif %}/>
-      <Phone CountryCode="{{ private.phone.country_code }}" {% if private.phone.area_code %} AreaCode="{{ private.phone.area_code }}" {% endif %} LocalNumber="{{ private.phone.local_number }}"/>
+      <Phone CountryCode="{{ private.phone.country_code }}" AreaCode="{{ private.phone.area_code }}" LocalNumber="{{ private.phone.local_number }}"/>
       {% if private.fax %}
-        <Fax CountryCode="{{ private.fax.country_code }}" {% if private.fax.area_code %} AreaCode="{{ private.fax.area_code }}" {% endif %} LocalNumber="{{ private.fax.local_number }}"/>
+        <Fax CountryCode="{{ private.fax.country_code }}" AreaCode="{{ private.fax.area_code }}" LocalNumber="{{ private.fax.local_number }}"/>
       {% endif %}
     </RegistrarSRSContact>
     <DefaultTechnicalContact Name="{{ technical.name }}" Email="{{ technical.email_address }}">
@@ -32,7 +32,7 @@
                      {% if technical.postal_province %} Province="{{ technical.postal_province }}" {% endif %}
                      CountryCode="{{ technical.postal_country }}"
                      {% if technical.postal_code %} PostalCode="{{ technical.postal_code }}" {% endif %}/>
-      <Phone CountryCode="{{ technical.phone.country_code }}" {% if technical.phone.area_code %} AreaCode="{{ technical.phone.area_code }}" {% endif %} LocalNumber="{{ technical.phone.local_number }}"/>
+      <Phone CountryCode="{{ technical.phone.country_code }}" AreaCode="{{ technical.phone.area_code }}" LocalNumber="{{ technical.phone.local_number }}"/>
       {% if technical.fax %}
         <Fax CountryCode="{{ technical.fax.country_code }}" AreaCode="{{ technical.fax.area_code }}" LocalNumber="{{ technical.fax.local_number }}"/>
       {% endif %}
