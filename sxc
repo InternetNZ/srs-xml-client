@@ -45,13 +45,13 @@ import binascii
 import traceback
 
 
-PARENT_DIR = os.path.dirname(sys.argv[0]) or './'
+parent_dir = os.path.dirname(sys.argv[0]) or './'
 
-REGISTRY_KEY = 'registry/srs-production-key.asc'
-REGISTRY_CERTIFICATE = 'registry/srs-root-ca.pem'
+registry_key = 'registry/srs-production-key.asc'
+registry_certificate = 'registry/srs-root-ca.pem'
 
-VERSION_MAJOR = '8'
-VERSION_MINOR = '0'
+version_major = '8'
+version_minor = '0'
 
 
 class ArgumentError(Exception):
@@ -113,7 +113,7 @@ class GetOptions():
 
 
 def parse_arguments():
-    arguments = {'version_major': VERSION_MAJOR, 'version_minor': VERSION_MINOR}
+    arguments = {'version_major': version_major, 'version_minor': version_minor}
 
     getopt = GetOptions(sys.argv[1:])
     action = getopt.argument(False)
@@ -607,13 +607,13 @@ def check_arguments(action, arguments):
             arguments['registry_certificate'] = os.environ.get('REGISTRY_CERTIFICATE')
 
             if arguments['registry_certificate'] is None:
-                arguments['registry_certificate'] = PARENT_DIR + '/' + REGISTRY_CERTIFICATE
+                arguments['registry_certificate'] = parent_dir + '/' + registry_certificate
 
         if 'registry_key' not in arguments:
             arguments['registry_key'] = os.environ.get('REGISTRY_KEY')
 
             if arguments['registry_key'] is None:
-                arguments['registry_key'] = PARENT_DIR + '/' + REGISTRY_KEY
+                arguments['registry_key'] = parent_dir + '/' + registry_key
 
         if 'registrar_key' not in arguments:
             arguments['registrar_key'] = os.environ.get('REGISTRAR_KEY')
@@ -828,7 +828,21 @@ def send_request(options, content):
         except pgpy.errors.PGPDecryptionError:
             raise InternalError('Incorrect password')
 
-    http_response = http_request.post(options.registry_url, verify = options.registry_certificate, headers = {'User-Agent': 'sxc/0.7'}, data = {'n': options.registrar_id, 'r': content, 's': signature}, timeout = options.timeout)
+    try:
+        http_response = http_request.post(options.registry_url, verify = options.registry_certificate, headers = {'User-Agent': 'sxc/0.8'}, data = {'n': options.registrar_id, 'r': content, 's': signature}, timeout = options.timeout)
+
+    except http_request.exceptions.SSLError as error:
+        reason = re.sub(r'(?x) ^ \[SSL: \  [A-Z_]+ \] \  (.*) \  \(_ssl.c: [0-9]+ \) $', r'\1', str(error.args[0].reason.args[0]))
+
+        raise InternalError('SSL: ' + reason)
+
+    except http_request.exceptions.Timeout as error:
+        raise InternalError('HTTP request timed-out')
+
+    except http_request.exceptions.ConnectionError as error:
+        reason = re.sub(r'(?x) ^ < [^:]+ > : \ ', r'', str(error.args[0].reason.args[0]))
+
+        raise InternalError(reason)
 
     if http_response.headers['Content-Type'] != 'application/x-www-form-urlencoded':
         raise InternalError('Wrong content type: {}'.format(http_response.headers['Content-Type']))
@@ -860,7 +874,7 @@ def main():
     action, arguments = parse_arguments()
 
     if action == 'help':
-        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), trim_blocks = True).get_template('client-help.j2')
+        template = jinja2.Environment(loader = jinja2.FileSystemLoader(parent_dir + '/templates'), trim_blocks = True).get_template('client-help.j2')
         print(template.render(arguments), end = '')
 
         return
@@ -885,10 +899,10 @@ def main():
 
             arguments['action_id'] = binascii.hexlify(struct.pack('>II', seconds, (microseconds << 12) | random.randrange(0, 2 << 12))).decode('utf-8')
 
-        template = jinja2.Environment(loader = jinja2.FileSystemLoader(PARENT_DIR + '/templates'), autoescape = True).get_template(action + '.j2')
+        template = jinja2.Environment(loader = jinja2.FileSystemLoader(parent_dir + '/templates'), autoescape = True).get_template(action + '.j2')
         content = re.sub(r'(?x) > [ \t\r\n]+ <', '><', template.render(arguments))
 
-    xml_document = etree.fromstring(content)
+    xml_document = etree.fromstring(content.encode('utf-8'))
 
     if 'dry_run' in arguments:
         print(etree.tostring(xml_document, pretty_print = True).decode('utf-8'), end = '')
