@@ -1,4 +1,4 @@
-{% if help %}
+{% if help == 'help' %}
 sxc ACTION [OPTIONS]
 
 Send XML transactions to the New Zealand Shared Registry System.
@@ -79,7 +79,7 @@ The 'help' action will display this message.
 Run 'sxc help ACTION' to see which options are available for that action. The options
 shown in the example command line are required.
 
-{% elif version %}
+{% elif help == 'version' %}
 sxc version 0.8
 
 Copyright 2018-2019 Internet New Zealand Inc.
@@ -110,7 +110,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-{% elif domain_create %}
+{% elif help == 'domain-create' %}
 Create (register) a domain name.
 
 sxc domain-create --domain NAME --term NUMBER --registrant OPTIONS [OPTIONS]
@@ -153,7 +153,7 @@ sxc domain-create --domain NAME --term NUMBER --registrant OPTIONS [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif domain_update %}
+{% elif help == 'domain-update' %}
 Update the details domain name including transferring or cancelling.
 
 sxc domain-update --domain NAME [NAME]* [OPTIONS]
@@ -220,7 +220,7 @@ sxc domain-update --domain NAME [NAME]* [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif domain_details_query %}
+{% elif help == 'domain-details-query' %}
 Query details about a domain including history.
 
 sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
@@ -304,7 +304,7 @@ sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
   --audit TEXT                     Match audit text
   --query-id ID                    Assign an ID for this query
 
-{% elif handle_create %}
+{% elif help == 'handle-create' %}
 Create a contact handle.
 
 sxc handle-create --handle OPTIONS [OPTIONS]
@@ -328,7 +328,7 @@ sxc handle-create --handle OPTIONS [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif handle_update %}
+{% elif help == 'handle-update' %}
 Update or delete a contact handle.
 
 sxc handle-update --handle OPTIONS [OPTIONS]
@@ -359,7 +359,7 @@ sxc handle-update --handle OPTIONS [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif handle_details_query %}
+{% elif help == 'handle-details-query' %}
 Query details about a contact handle.
 
 sxc handle-details-query [OPTIONS]
@@ -393,7 +393,7 @@ sxc handle-details-query [OPTIONS]
 
   --query-id ID                    Assign an ID for this query
 
-{% elif udai_valid_query %}
+{% elif help == 'udai-valid-query' %}
 Check whether a UDAI is valid for a domain
 
 sxc udai-valid-query --domain NAME --udai UDAI
@@ -402,7 +402,7 @@ sxc udai-valid-query --domain NAME --udai UDAI
   --udai UDAI                      UDAI for domain
   --query-id ID                    Assign an ID for this query
 
-{% elif whois %}
+{% elif help == 'whois' %}
 Whois details for a domain.
 
 sxc whois --domain NAME [OPTIONS]
@@ -412,7 +412,7 @@ sxc whois --domain NAME [OPTIONS]
   --source-ip ADDRESS              Source IP address for rate-limiting
   --query-id ID                    Assign an ID for this query
 
-{% elif get_messages %}
+{% elif help == 'get-messages' %}
 Get events that have occured for this registrar.
 
 sxc get-messages [OPTIONS]
@@ -437,7 +437,7 @@ sxc get-messages [OPTIONS]
   --audit TEXT                     Match audit text 
   --query-id ID                    Assign an ID for this query
 
-{% elif ack_message %}
+{% elif help == 'ack-message' %}
 Acknowledge a message in the queue.
 
 sxc ack-message --transaction-id ID [OPTIONS]
@@ -447,7 +447,7 @@ sxc ack-message --transaction-id ID [OPTIONS]
   --transaction-id ID              Transaction ID for that action
   --action-id ID                   Unique ID for this action
 
-{% elif reset_msgq %}
+{% elif help == 'reset-msgq' %}
 Mark all messages as acknowledged.
 
 sxc reset-msgq [OPTIONS]
@@ -455,7 +455,7 @@ sxc reset-msgq [OPTIONS]
   --target-registrar-id ID         ID of the registrar to reset the message queue for
   --action-id ID                   Unique ID for this action
 
-{% elif action_details_query %}
+{% elif help == 'action-details-query' %}
 Get the raw XML request and response for a previous action.
 
 sxc action-details-query --action-id ID [OPTIONS]
@@ -465,7 +465,7 @@ sxc action-details-query --action-id ID [OPTIONS]
   --action-id ID                   ID of the action to show details for
   --query-id ID                    Assign an ID for this query
 
-{% elif registrar_create %}
+{% elif help == 'registrar-create' %}
 Create a registrar.
 
 sxc registrar-create --target-registrar-id ID --registrar NAME --accref TEXT --public OPTIONS --private OPTIONS --technical OPTIONS [OPTIONS]
@@ -518,7 +518,7 @@ sxc registrar-create --target-registrar-id ID --registrar NAME --accref TEXT --p
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif registrar_update %}
+{% elif help == 'registrar-update' %}
 Update a registrar.
 
 sxc registrar-update [OPTIONS]
@@ -579,10 +579,10 @@ sxc registrar-update [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif registrar_details_query %}
+{% elif help == 'registrar-details-query' %}
 Query details about a registrar including history.
 
-sxc registrar-details-query [OPTONS]
+sxc registrar-details-query [OPTIONS]
 
   --target-registrar-id ID         ID of registrar being queried
   --registrar NAME                 Name of registrar
@@ -590,7 +590,7 @@ sxc registrar-details-query [OPTONS]
   --results-to DATE                Only return history reults before this date
   --query-id ID                    Assign an ID for this query
 
-{% elif registrar_account_query %}
+{% elif help == 'registrar-account-query' %}
 Query details about billing for a registrar's account.
 
 sxc registrar-account-query [OPTIONS]
@@ -612,7 +612,7 @@ sxc registrar-account-query [OPTIONS]
 
   --query-id ID                    Assign an ID for this query
 
-{% elif access_control_list_add %}
+{% elif help == 'access-control-list-add' %}
 Add entries to the access control list.
 
 sxc access-control-list-add --resource NAME {--whitelist | --blacklist} [OPTIONS]
@@ -632,7 +632,7 @@ sxc access-control-list-add --resource NAME {--whitelist | --blacklist} [OPTIONS
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif access_control_list_remove %}
+{% elif help == 'access-control-list-remove' %}
 Remove entries from the access control list.
 
 sxc access-control-list-remove --resource NAME {--whitelist | --blacklist} [OPTIONS]
@@ -651,7 +651,7 @@ sxc access-control-list-remove --resource NAME {--whitelist | --blacklist} [OPTI
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif access_control_list_query %}
+{% elif help == 'access-control-list-query' %}
 Query the access control list.
 
 sxc access-control-list-query [OPTIONS]
@@ -672,7 +672,7 @@ sxc access-control-list-query [OPTIONS]
 
   --query-id ID                    Assign an ID for this query
 
-{% elif billed_until_adjustment %}
+{% elif help == 'billed-until-adjustment' %}
 Adjust the billed-until date for a domain.
 
 sxc billed-until-adjustment --domain NAME --billed-until DATE [OPTIONS]
@@ -683,7 +683,7 @@ sxc billed-until-adjustment --domain NAME --billed-until DATE [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif adjust_registrar_account %}
+{% elif help == 'adjust-registrar-account' %}
 Adjust the billing of a domain.
 
 sxc adjust-registrar-account --domain NAME --months NUMBER {--credit | --debit} --transaction DATE --period-start DATE --period-end DATE [OPTIONS]
@@ -698,7 +698,7 @@ sxc adjust-registrar-account --domain NAME --months NUMBER {--credit | --debit} 
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif billing_amount_update %}
+{% elif help == 'billing-amount-update' %}
 Update the domain term billing amount.
 
 sxc billing-amount-update --amount DOLLARS [OPTIONS]
@@ -708,14 +708,14 @@ sxc billing-amount-update --amount DOLLARS [OPTIONS]
 
   --action-id ID                   Unique ID for this action
 
-{% elif billing_amount_query %}
+{% elif help == 'billing-amount-query' %}
 Query details about the domain term billing amount.
 
 sxc billing-amount-query [OPTIONS]
 
   --query-id ID                    Assign an ID for this query
 
-{% elif deferred_income_detail_query %}
+{% elif help == 'deferred-income-detail-query' %}
 Query details abount deferred income.
 
 sxc deferred-income-detail-query --base-month NUMBER --base-year NUMBER --income-month NUMBER --income-year NUMBER
@@ -726,7 +726,7 @@ sxc deferred-income-detail-query --base-month NUMBER --base-year NUMBER --income
   --income-year NUMBER             Year the transactions occurred
   --query-id ID                    Assign an ID for this query
 
-{% elif deferred_income_summary_query %}
+{% elif help == 'deferred-income-summary-query' %}
 Get a summary of deferred income.
 
 sxc deferred-income-summary-query --base-month NUMBER --base-year NUMBER --income-month NUMBER --income-year NUMBER
@@ -737,7 +737,7 @@ sxc deferred-income-summary-query --base-month NUMBER --base-year NUMBER --incom
   --income-year NUMBER             Year the transactions occurred
   --query-id ID                    Assign an ID for this query
 
-{% elif sys_params_create %}
+{% elif help == 'sys-params-create' %}
 Create a system parameter.
 
 sxc sys-params-create --name TEXT --value TEXT [OPTIONS]
@@ -749,7 +749,7 @@ sxc sys-params-create --name TEXT --value TEXT [OPTIONS]
   --audit TEXT                     Optional action reference
   --query-id ID                    Assign an ID for this query
 
-{% elif sys_params_update %}
+{% elif help == 'sys-params-update' %}
 Update a system parameter.
 
 sxc sys-params-update --name TEXT --value TEXT [OPTIONS]
@@ -760,14 +760,14 @@ sxc sys-params-update --name TEXT --value TEXT [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif sys_params_query %}
+{% elif help == 'sys-params-query' %}
 Get a list of system parameters.
 
 sxc sys-params-query [OPTIONS]
 
   --query-id ID                    Assign an ID for this query
 
-{% elif schedule_create %}
+{% elif help == 'schedule-create' %}
 Create a scheduled job.
 
 sxc schedule-create --process NAME --frequency PERIOD --first-run DATE [OPTIONS]
@@ -782,7 +782,7 @@ sxc schedule-create --process NAME --frequency PERIOD --first-run DATE [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif schedule_update %}
+{% elif help == 'schedule-update' %}
 Update a scheduled job.
 
 sxc schedule-update --process NAME --first-run DATE [OPTIONS]
@@ -798,7 +798,7 @@ sxc schedule-update --process NAME --first-run DATE [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif schedule_cancel %}
+{% elif help == 'schedule-cancel' %}
 Cancel a scheduled job.
 
 sxc schedule-cancel --process NAME --first-run DATE [OPTIONS]
@@ -811,7 +811,7 @@ sxc schedule-cancel --process NAME --first-run DATE [OPTIONS]
   --action-id ID                   Unique ID for this action
   --audit TEXT                     Optional action reference
 
-{% elif schedule_query %}
+{% elif help == 'schedule-query' %}
 Query details about scheduled jobs.
 
 sxc schedule-query [OPTIONS]
@@ -822,7 +822,7 @@ sxc schedule-query [OPTIONS]
   --active-on DATE                 Only return jobs that were still active on this date
   --query-id ID                    Assign an ID for this query
 
-{% elif run_log_create %}
+{% elif help == 'run-log-create' %}
 Create a run log for a scheduled job.
 
 sxc run-log-create --process NAME {--success | --failure} --first-run DATE --logged DATE
@@ -836,7 +836,7 @@ sxc run-log-create --process NAME {--success | --failure} --first-run DATE --log
   --first-run DATE                 First run date for this job
   --action-id ID                   Optional action reference
 
-{% elif run_log_query %}
+{% elif help == 'run-log-query' %}
 Query the run logs.
 
 sxc run-log-query [OPTIONS]
@@ -847,7 +847,7 @@ sxc run-log-query [OPTIONS]
   --logged-to DATE                 Only return logs before this date
   --query-id ID                    Assign an ID for this query
 
-{% elif send_xml %}
+{% elif help == 'send-xml' %}
 Send a raw XML request, will use stdin if no input file is specified.
 
 sxc send-xml [OPTIONS]
