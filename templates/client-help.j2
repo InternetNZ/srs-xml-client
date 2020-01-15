@@ -82,7 +82,7 @@ shown in the example command line are required.
 {% elif help == 'version' %}
 sxc version 0.8
 
-Copyright 2018-2019 Internet New Zealand Inc.
+Copyright 2018-2020 Internet New Zealand Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -156,11 +156,11 @@ sxc domain-create --domain NAME --term NUMBER --registrant OPTIONS [OPTIONS]
 {% elif help == 'domain-update' %}
 Update the details domain name including transferring or cancelling.
 
-sxc domain-update --domain NAME [NAME]* [OPTIONS]
+sxc domain-update --domain NAME* [OPTIONS]
 
   --target-registrar-ID            ID of the registrar to update the domain on
 
-  --domain NAME [NAME]*            Domain names to update
+  --domain NAME*                   Domain names to update
   --term NUMBER                    New billing term (months)
   --udai UDAI                      UDAI, used to transfer the domain
   --new-udai                       Generate UDAI
@@ -223,11 +223,11 @@ sxc domain-update --domain NAME [NAME]* [OPTIONS]
 {% elif help == 'domain-details-query' %}
 Query details about a domain including history.
 
-sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
+sxc domain-details-query --domain NAME* [OPTIONS]
 
   --target-registrar-id ID         ID of the registrar being queried
 
-  --domain NAME [NAME]*            Domain names to query
+  --domain NAME*                   Domain names to query
   --term NUMBER                    Query domains having this term
   --active                         Only active domains
   --pending                        Only pending-release domains
@@ -239,7 +239,7 @@ sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
   --count                          Return the number of results
   --history                        Search domain history instead
 
-  --fields FIELD [FIELD]*
+  --fields FIELD*
     registrar-id                   Return registrar ID
     registrar                      Return registrar name
     originating-registrar-id       Return originating registrar ID
@@ -277,12 +277,12 @@ sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
   --admin OPTIONS                  Admin contact, see --registrant
   --technical OPTIONS              Technical contact, see --registrant
   
-  --nameserver [HOSTNAME] OPTIONS
+  --nameserver [HOSTNAME] [OPTIONS]
       HOSTNAME                     Match hostname
     --ip4 ADDRESS                  Match IPv4 address
     --ip6 ADDRESS                  Match IPv6 address
     
-  --dnssec [TAG] OPTIONS
+  --dnssec [TAG] [OPTIONS]
       TAG                          Match key tag
     --digest DIGEST                Match digest
     --type NUMBER                  Match digest type
@@ -307,7 +307,7 @@ sxc domain-details-query --domain NAME [NAME]* [OPTIONS]
 {% elif help == 'handle-create' %}
 Create a contact handle.
 
-sxc handle-create --handle OPTIONS [OPTIONS]
+sxc handle-create --handle OPTIONS
 
   --target-registrar-id ID         ID of the registrar to create the handle for
 
@@ -331,11 +331,11 @@ sxc handle-create --handle OPTIONS [OPTIONS]
 {% elif help == 'handle-update' %}
 Update or delete a contact handle.
 
-sxc handle-update --handle OPTIONS [OPTIONS]
+sxc handle-update --handle OPTIONS
 
   --target-registrar-id ID         ID of the registrar to update the handle on
 
-  --handle ID --name NAME --email EMAIL [OPTIONS]
+  --handle ID [OPTIONS]
       ID                           ID for handle being updated
     --name NAME                    Name of contact
     --email EMAIL                  Email address of contact
@@ -491,7 +491,7 @@ sxc registrar-create --target-registrar-id ID --registrar NAME --accref TEXT --p
   --private OPTIONS                Private SRS contact, see --public
   --technical OPTIONS              Default technical contact, see --public
 
-  --roles ROLE [ROLE]*
+  --roles ROLE*
     connect                        Can connect to registry
     registry                       Can act as the registry
     registrar                      Can have domains
@@ -511,8 +511,8 @@ sxc registrar-create --target-registrar-id ID --registrar NAME --accref TEXT --p
     query-all-domains              Can query all domains
     whois                          Can query whois details
 
-  --pgp FILE [FILE]*               Files containing a PGP public key
-  --2lds NAME [NAME]*              List of allowed second level domains
+  --pgp FILE*                      Files containing a PGP public key
+  --2lds NAME*                     List of allowed second level domains
   --epp-password TEXT              EPP authentication password
 
   --action-id ID                   Unique ID for this action
@@ -549,7 +549,7 @@ sxc registrar-update [OPTIONS]
   --private OPTIONS                Private SRS contact, see --public
   --technical OPTIONS              Default technical contact, see --public
 
-  --roles ROLE [ROLE]*
+  --roles ROLE*
     connect                        Can connect to registry
     registry                       Can act as the registry
     registrar                      Can have domains
@@ -569,9 +569,9 @@ sxc registrar-update [OPTIONS]
     query-all-domains              Can query all domains
     whois                          Can query whois details
 
-  --pgp FILE [FILE]*               Files containing a PGP public key
+  --pgp FILE*                      Files containing a PGP public key
   --no-pgp                         Delete all PGP public keys
-  --2ld NAME [NAME]*               List of allowed second level domains
+  --2ld NAME*                      List of allowed second level domains
   --no-2lds                        Delete all allowed second level domains
   --epp-password TEXT              EPP authentication password
   --no-epp-password                Clear EPP authentication password
@@ -659,7 +659,7 @@ sxc access-control-list-query [OPTIONS]
   --resource NAME                  Name for resource
   --whitelist                      Entries from whitelist
   --blacklist                      Entries from blacklist
-  --type [TYPE] [TYPE]*            Type of entries to query
+  --type TYPE*                     Type of entries to query
     domain                         Entries with domain name
     registrar-id                   Entries with registrar ID
     ip                             Entries with IP address
