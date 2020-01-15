@@ -32,7 +32,7 @@ ENVIRONMENT
 The following environment variables can be used:
 
 * `REGISTRY_URL` URL for the SRS, eg:
-  `https://srstest.srs.net.nz/srs/registrar`, used when `--url` is not
+  `https://srs.test.srs.net.nz/srs/registrar`, used when `--url` is not
   specified.
 
 * `REGISTRY_CERTIFICATE` SSL CA certificate that authenticates the SSL 
@@ -99,7 +99,7 @@ An example whois:
 
 ```sh
 sxc whois
-  --url https://srstest.srs.net.nz/srs/registrar
+  --url https://srs.test.srs.net.nz/srs/registrar
   --registrar-id 500
   --domain example.co.nz
 ```
@@ -112,7 +112,7 @@ In this example `domain-create`, the sub-options for `--registrant` and
 
 ```sh
 sxc domain-create
-  --url https://srstest.srs.net.nz/srs/registrar
+  --url https://srs.test.srs.net.nz/srs/registrar
   --registrar-id 500
   --domain example.co.nz
   --term 12
@@ -134,7 +134,7 @@ For actions that take multiple domains, just provide multiple arguments to
 
 ```sh
 sxc domain-update
-  --url https://srstest.srs.net.nz/srs/registrar
+  --url https://srs.test.srs.net.nz/srs/registrar
   --registrar-id 500
   --domain example.co.nz example.org.nz example.net.nz
   --registrant
@@ -161,7 +161,7 @@ This `get-messages` example will fetch all messages for that particular day.
 
 ```sh
 sxc get-messages
-  --url https://srstest.srs.net.nz/srs/registrar
+  --url https://srs.test.srs.net.nz/srs/registrar
   --registrar-id 500
   --transaction-from "1/8/2018"
   --transaction-to "1/8/2018 23:59:59"
@@ -171,7 +171,7 @@ To send your own XML, use `send-xml` as the action.
 
 ```sh
 sxc send-xml
-  --url https://srstest.srs.net.nz/srs/registrar
+  --url https://srs.test.srs.net.nz/srs/registrar
   --registrar-id 500
   --file request.xml
 ```
@@ -183,7 +183,7 @@ This `registrar-account-query` example will get all transactions for the
 specified month.
 
 ```sh
-export REGISTRY_URL="http://srstest.srs.net.nz/srs/registrar"
+export REGISTRY_URL="http://srs.test.srs.net.nz/srs/registrar"
 export REGISTRAR_ID="500"
 sxc registrar-account-query
   --transaction-from "1/8/2018 00:00:00"
