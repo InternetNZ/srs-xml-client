@@ -55,14 +55,11 @@ KEYS
 
 The following keys are in the `registry/` directory:
 
-* `srs-production-key.asc` The PGP key that is currently being used by both
-  the Production and Test environments. It will no longer be in use after
-  the 18th of June 2019.
+* `srs-production-key.asc` The PGP key for the Production environment.
 
-* `srs-production-key-20190618.asc` The new PGP public key for the Production
-  environment. It will go into use on the 18th of June 2019.
+* `srs-test-key.asc` The PGP public key for the Test environment.
 
-* `registry/srs-test-key.asc` The PGP public key for the Test environment.
+* `srs-rps-key.asc` The PGP public key for the RPS environment.
 
 * `srs-root-ca.pem` The SSL CA certificate used to authenticate the SSL
   connection.
