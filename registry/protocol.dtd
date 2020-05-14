@@ -1,11 +1,9 @@
 <?xml encoding="UTF-8"?>
 
 <!--
-protocol.rnc: RELAX NG schema for Shared Registry System Protocol
+DTD for Shared Registry System Protocol
 
-Author:     Srdjan Jankovic
-Version:    Release version 7.11
-Revised:    SRS Development Team
+Author: Internet New Zealand Inc.
 
 Based on a prototype written by Ewen McNeill, 2002/03/05
 -->
@@ -39,7 +37,7 @@ streams to be more directly linked to the registrar).
 
 ======================================
 
-Copyright 2002-2009 NZ Registry Services
+Copyright 2002-2018 Internet New Zealand Inc.
 
 This file is part of the Shared Registry System
 
@@ -171,8 +169,8 @@ If Second is omitted, it defaults to 0
                  |QueryRegACL|QueryAllDomains">
 
 <!ENTITY % ScheduledJob "BuildDnsZoneFiles|ReleaseDomains|RenewDomains
-                         |GenerateStatsReport|ExtractWebsiteData
-                         |Sunrise2ldRegistrarReport
+                         |GenerateStatsReport|GenerateDomainReport
+                         |ExtractWebsiteData|Sunrise2ldRegistrarReport
                          |DeleteUnusedHandles">
 
 <!ENTITY % DateRange "From?,To?">
@@ -337,11 +335,10 @@ ActionResponse: (Domain*|Error)
 <!ELEMENT DomainDetailsQry (DomainNameFilter*,NameServerFilter?,
                             DNSSECFilter?,RegistrantContactFilter?,
                             AdminContactFilter?,TechnicalContactFilter?,
-                            ResultDateRange?,SearchDateRange?,
-                            ChangedInDateRange?,RegisteredDateRange?,
-                            LockedDateRange?,CancelledDateRange?,
-                            BilledUntilDateRange?,AuditTextFilter?,
-                            ActionIdFilter?,FieldList?)>
+                            RegisteredDateRange?,LockedDateRange?,
+                            CancelledDateRange?,BilledUntilDateRange?,
+                            AuditTextFilter?,ActionIdFilter?,
+                            FieldList?)>
 <!ATTLIST DomainDetailsQry
   QryId %UID; #IMPLIED
   Status (%RegDomainStatus;) #IMPLIED
@@ -374,8 +371,8 @@ ActionResponse: (Registrar|Error)
 -->
 
 <!ELEMENT RegistrarCreate (RegistrarPublicContact,RegistrarSRSContact,
-                           DefaultTechnicalContact,EncryptKeys,EPPAuth?,
-                           Allowed2LDs?,Roles?,AuditText?)>
+                           DefaultTechnicalContact,EncryptKeys?,
+                           EPPAuth?,Allowed2LDs?,Roles?,AuditText?)>
 <!ATTLIST RegistrarCreate
   ActionId %UID; #REQUIRED
   Name CDATA #REQUIRED
@@ -744,13 +741,12 @@ response to a GetMessages action.
 <!ENTITY % RegistryAction "SysParamsUpdate|SysParamsCreate|SysParamsQry
                            |RunLogCreate|RunLogQry|ScheduleCreate
                            |ScheduleCancel|ScheduleQry|ScheduleUpdate
-                           |BillingExtract|SetBillingAmount
-                           |BillingAmountQry|DeferredIncomeSummaryQry
+                           |BillingAmountQry|BillingAmountUpdate
+                           |DeferredIncomeSummaryQry
                            |DeferredIncomeDetailQry
                            |BilledUntilAdjustment|AdjustRegistrarAccount
                            |AccessControlListQry|AccessControlListAdd
-                           |AccessControlListRemove
-                           |BillingAmountUpdate">
+                           |AccessControlListRemove">
 
 <!ENTITY % Action "%DomainWriteAction;|%DomainQueryAction;
                    |%HandleWriteAction;|%HandleQueryAction;
@@ -764,8 +760,8 @@ response to a GetMessages action.
                     (Response*|(%ActionResponse;)|AckResponse)?)>
 <!ATTLIST Response
   Action (%ActionEtc;) #REQUIRED
-  FeId %Number; #REQUIRED
-  FeSeq %Number; #REQUIRED
+  FeId CDATA #REQUIRED
+  FeSeq CDATA #REQUIRED
   OrigRegistrarId %RegistrarId; #REQUIRED
   TransId %UID; #IMPLIED
   Rows %Number; #IMPLIED
@@ -939,7 +935,7 @@ As above, but a filter for a search
 <!-- ++ Registrar details +++++++++++++++++ -->
 
 <!ELEMENT Registrar (RegistrarPublicContact,RegistrarSRSContact,
-                     DefaultTechnicalContact,EncryptKeys,EPPAuth?,
+                     DefaultTechnicalContact,EncryptKeys?,EPPAuth?,
                      Allowed2LDs?,Roles?,AuditDetails?)>
 <!ATTLIST Registrar
   RegistrarId %RegistrarId; #REQUIRED
